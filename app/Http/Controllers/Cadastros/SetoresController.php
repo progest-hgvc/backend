@@ -296,10 +296,13 @@ class SetoresController
                 ->exists();
 
             if (!$hasPermission && !$user->isSuperAdmin()) {
+                // Ao invés de disparar um erro 403 (que cria um popup de erro na UI),
+                // retornamos uma lista vazia, pois para o usuário sem permissão,
+                // ele simplesmente não tem setores consumidores para gerenciar.
                 return response()->json([
-                    'status' => false,
-                    'message' => 'Usuário não tem permissão para acessar esta lista'
-                ], 403);
+                    'status' => true,
+                    'data' => []
+                ]);
             }
 
             // Verificar se setor existe
