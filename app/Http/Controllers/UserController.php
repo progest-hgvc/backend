@@ -45,7 +45,7 @@ class UserController extends Controller
         }
 
         // Retorna o usuário com os relacionamentos, igual ao código original
-        $user = User::with(['Setores' => function ($q) {
+        $user = User::with(['setores' => function ($q) {
             $q->select('Setores.id', 'Setores.unidade_id', 'Setores.nome', 'Setores.descricao', 'Setores.status', 'Setores.estoque', 'Setores.tipo');
         }])->find($user->id);
 
@@ -89,7 +89,7 @@ class UserController extends Controller
             return response()->json(['status' => false, 'message' => 'Erro ao atualizar usuário.'], 500);
         }
 
-        $user = User::with(['Setores' => function ($q) {
+        $user = User::with(['setores' => function ($q) {
             $q->select('Setores.id', 'Setores.unidade_id', 'Setores.nome', 'Setores.descricao', 'Setores.status', 'Setores.estoque', 'Setores.tipo');
         }])->find($user->id);
 
@@ -156,7 +156,7 @@ class UserController extends Controller
 
     public function listData(Request $request)
     {
-        $user = User::with(['Setores' => function ($q) {
+        $user = User::with(['setores' => function ($q) {
             $q->select('Setores.id', 'Setores.unidade_id', 'Setores.nome', 'Setores.descricao', 'Setores.status', 'Setores.estoque', 'Setores.tipo');
         }])->find($request->id);
 
@@ -170,7 +170,7 @@ class UserController extends Controller
             'status' => true,
             'data' => $user,
             'tipo_vinculo' => $tipoVinculo,
-            'Setores' => $user->Setores,
+            'Setores' => $user->setores,
         ]);
     }
 
