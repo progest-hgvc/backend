@@ -658,6 +658,27 @@ class SetoresController
                 ], 422);
             }
 
+            /** @var User|null $user */
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['status' => false, 'message' => 'Usuário não autenticado'], 401);
+            }
+
+            if (!$user->isSuperAdmin()) {
+                $isAdmin = DB::table('usuario_setor')
+                    ->where('usuario_id', $user->id)
+                    ->where('setor_id', $data['setor_solicitante_id'])
+                    ->where('perfil', 'admin')
+                    ->exists();
+
+                if (!$isAdmin) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Apenas administradores podem definir setores distribuidores.'
+                    ], 403);
+                }
+            }
+
             // Verificar se o setor fornecedor tem controle de estoque
             $setorFornecedor = DB::table('setores')->where('id', $data['setor_fornecedor_id'])->first();
             if (!$setorFornecedor || !$setorFornecedor->estoque) {
@@ -704,6 +725,44 @@ class SetoresController
     {
         try {
             $data = $request->all();
+
+            $setorSolicitanteId = null;
+            if (isset($data['id'])) {
+                $relacao = DB::table('setor_fornecedor')->where('id', $data['id'])->first();
+                if ($relacao) {
+                    $setorSolicitanteId = $relacao->setor_solicitante_id;
+                }
+            } elseif (isset($data['setor_solicitante_id'])) {
+                $setorSolicitanteId = $data['setor_solicitante_id'];
+            }
+
+            if (!$setorSolicitanteId) {
+                return response()->json([
+                    'status' => false,
+                    'message' => 'Dados insuficientes ou relação não encontrada para remoção.'
+                ], 400);
+            }
+
+            /** @var User|null $user */
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json(['status' => false, 'message' => 'Usuário não autenticado'], 401);
+            }
+
+            if (!$user->isSuperAdmin()) {
+                $isAdmin = DB::table('usuario_setor')
+                    ->where('usuario_id', $user->id)
+                    ->where('setor_id', $setorSolicitanteId)
+                    ->where('perfil', 'admin')
+                    ->exists();
+
+                if (!$isAdmin) {
+                    return response()->json([
+                        'status' => false,
+                        'message' => 'Apenas administradores podem remover setores distribuidores.'
+                    ], 403);
+                }
+            }
 
             // Aceita ID do relacionamento OU par de IDs
             if (isset($data['id'])) {

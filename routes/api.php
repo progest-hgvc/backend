@@ -104,8 +104,10 @@ Route::post('/setores/list', [SetoresController::class, 'listAll']);
 Route::post('/setores/listData', [SetoresController::class, 'listData']);
 Route::post('/setores/delete/{id}', [SetoresController::class, 'delete']);
 Route::post('/setores/toggleStatus', [SetoresController::class, 'toggleStatus']);
-Route::post('/setores/addFornecedor', [SetoresController::class, 'addFornecedor']);
-Route::post('/setores/removeFornecedor', [SetoresController::class, 'removeFornecedor']);
+Route::middleware('auth:sanctum')->group(function () {
+    Route::post('/setores/addFornecedor', [SetoresController::class, 'addFornecedor']);
+    Route::post('/setores/removeFornecedor', [SetoresController::class, 'removeFornecedor']);
+});
 Route::middleware('auth:sanctum')->post('/setores/listWithAccess', [SetoresController::class, 'listWithAccess']);
 Route::middleware('auth:sanctum')->post('/setores/getDetail', [SetoresController::class, 'getDetail']);
 Route::middleware('auth:sanctum')->post('/setores/listConsumers', [SetoresController::class, 'listConsumers']);
