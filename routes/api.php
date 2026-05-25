@@ -12,7 +12,7 @@ use App\Http\Controllers\Cadastros\UnidadeMedidaController;
 use App\Http\Controllers\Cadastros\EstoqueController as CadastrosEstoqueController;
 use App\Http\Controllers\Cadastros\TipoVinculoController;
 use App\Http\Controllers\Cadastros\GrupoProdutoController;
-use App\Http\Controllers\Cadastros\UnidadeController;
+use App\Http\Controllers\Cadastros\PoloController;
 use App\Http\Controllers\EstoqueController;
 use App\Http\Controllers\EstoqueLoteController;
 use App\Http\Controllers\EntradaController;
@@ -81,20 +81,20 @@ Route::post('/tipo-vinculo/listData', [TipoVinculoController::class, 'listData']
 Route::post('/tipo-vinculo/delete/{id}', [TipoVinculoController::class, 'delete']);
 
 // Rotas para unidade (mantém compatibilidade com /polo)
-Route::post('/unidade/add', [UnidadeController::class, 'add']);
-Route::post('/unidade/update', [UnidadeController::class, 'update']);
-Route::post('/unidade/list', [UnidadeController::class, 'listAll']);
-Route::post('/unidade/listData', [UnidadeController::class, 'listData']);
-Route::post('/unidade/delete/{id}', [UnidadeController::class, 'delete']);
-Route::post('/unidade/toggleStatus', [UnidadeController::class, 'toggleStatus']);
+Route::post('/unidade/add', [PoloController::class, 'add']);
+Route::post('/unidade/update', [PoloController::class, 'update']);
+Route::post('/unidade/list', [PoloController::class, 'listAll']);
+Route::post('/unidade/listData', [PoloController::class, 'listData']);
+Route::post('/unidade/delete/{id}', [PoloController::class, 'delete']);
+Route::post('/unidade/toggleStatus', [PoloController::class, 'toggleStatus']);
 
 // Rotas antigas /polo para compatibilidade apontando para o mesmo controller
-Route::post('/polo/add', [UnidadeController::class, 'add']);
-Route::post('/polo/update', [UnidadeController::class, 'update']);
-Route::post('/polo/list', [UnidadeController::class, 'listAll']);
-Route::post('/polo/listData', [UnidadeController::class, 'listData']);
-Route::post('/polo/delete/{id}', [UnidadeController::class, 'delete']);
-Route::post('/polo/toggleStatus', [UnidadeController::class, 'toggleStatus']);
+Route::post('/polo/add', [PoloController::class, 'add']);
+Route::post('/polo/update', [PoloController::class, 'update']);
+Route::post('/polo/list', [PoloController::class, 'listAll']);
+Route::post('/polo/listData', [PoloController::class, 'listData']);
+Route::post('/polo/delete/{id}', [PoloController::class, 'delete']);
+Route::post('/polo/toggleStatus', [PoloController::class, 'toggleStatus']);
 
 // Rotas antigas de unidades removidas - usar /setores
 
@@ -105,13 +105,13 @@ Route::post('/setores/listData', [SetoresController::class, 'listData']);
 Route::post('/setores/delete/{id}', [SetoresController::class, 'delete']);
 Route::post('/setores/toggleStatus', [SetoresController::class, 'toggleStatus']);
 Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/setores/addFornecedor', [SetoresController::class, 'addFornecedor']);
-    Route::post('/setores/removeFornecedor', [SetoresController::class, 'removeFornecedor']);
+    Route::post('/setores/addDistribuidor', [SetoresController::class, 'addDistribuidor']);
+    Route::post('/setores/removeDistribuidor', [SetoresController::class, 'removeDistribuidor']);
 });
 Route::middleware('auth:sanctum')->post('/setores/listWithAccess', [SetoresController::class, 'listWithAccess']);
 Route::middleware('auth:sanctum')->post('/setores/getDetail', [SetoresController::class, 'getDetail']);
 Route::middleware('auth:sanctum')->post('/setores/listConsumers', [SetoresController::class, 'listConsumers']);
-Route::middleware('auth:sanctum')->post('/setores/listFornecedoresParaSetor', [SetoresController::class, 'listFornecedoresParaSetor']);
+Route::middleware('auth:sanctum')->post('/setores/listDistribuidoresParaSetor', [SetoresController::class, 'listDistribuidoresParaSetor']);
 
 // Rotas dos módulos produtos, categoriasProdutos e unidadesMedida foram removidas
 // Use os novos módulos: Produto, GrupoProduto e UnidadeMedida
