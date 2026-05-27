@@ -18,7 +18,8 @@ class PoloController
             $data = $request->validated();
 
             $polo = Polo::create([
-                'nome' => mb_strtoupper($data['nome']),
+                'nome'   => mb_strtoupper($data['nome']),
+                'sigla'  => $data['sigla'] ? mb_strtoupper(trim($data['sigla'])) : null,
                 'status' => $data['status'] ?? 'A'
             ]);
 
@@ -133,7 +134,8 @@ class PoloController
             }
 
             $polo->update([
-                'nome' => mb_strtoupper($data['nome']),
+                'nome'   => mb_strtoupper($data['nome']),
+                'sigla'  => isset($data['sigla']) ? mb_strtoupper(trim($data['sigla'])) : $polo->sigla,
                 'status' => $data['status'] ?? $polo->status
             ]);
 

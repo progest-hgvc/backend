@@ -11,8 +11,9 @@ class PoloRequest extends BaseFormRequest
         $id = $this->input('id');
 
         return [
-            'id' => 'nullable|integer',
-            'nome' => 'required|string|min:3|max:191|unique:polos,nome,' . $id,
+            'id'     => 'nullable|integer',
+            'nome'   => 'required|string|min:3|max:191|unique:polos,nome,' . $id,
+            'sigla'  => 'nullable|string|max:10',
             'status' => 'required|in:A,I'
         ];
     }
