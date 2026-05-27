@@ -46,13 +46,17 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::get('countUsers', [UserController::class, 'countUsers']);
 
-    // Cadastro de Usuários
-    // Rotas para gerenciamento de vínculo usuário <-> setor
-    Route::post('/usuarioSetor/create', [UsuarioSetorController::class, 'create']);
-    Route::post('/usuarioSetor/update', [UsuarioSetorController::class, 'update']);
-    Route::post('/usuarioSetor/delete', [UsuarioSetorController::class, 'delete']);
-    Route::post('/usuarioSetor/listBySetor', [UsuarioSetorController::class, 'listBySetor']);
-    Route::post('/usuarioSetor/listByUsuario', [UsuarioSetorController::class, 'listByUsuario']);
+    // Gerenciamento de vínculo usuário <-> setor
+    Route::post('/usuarioSetor/add',            [UsuarioSetorController::class, 'add']);
+    Route::post('/usuarioSetor/update',         [UsuarioSetorController::class, 'update']);
+    Route::post('/usuarioSetor/delete',         [UsuarioSetorController::class, 'delete']);
+    Route::post('/usuarioSetor/listarPorSetor', [UsuarioSetorController::class, 'listarPorSetor']);
+    Route::post('/usuarioSetor/listarPorUsuario', [UsuarioSetorController::class, 'listarPorUsuario']);
+
+    // @deprecated — manter para compatibilidade com frontend legado
+    Route::post('/usuarioSetor/create',      [UsuarioSetorController::class, 'add']);
+    Route::post('/usuarioSetor/listBySetor', [UsuarioSetorController::class, 'listarPorSetor']);
+    Route::post('/usuarioSetor/listByUsuario', [UsuarioSetorController::class, 'listarPorUsuario']);
 });
 
 
@@ -81,20 +85,21 @@ Route::post('/tipo-vinculo/list', [TipoVinculoController::class, 'listAll']);
 Route::post('/tipo-vinculo/listData', [TipoVinculoController::class, 'listData']);
 Route::post('/tipo-vinculo/delete/{id}', [TipoVinculoController::class, 'delete']);
 
-// Rotas para unidade (mantém compatibilidade com /polo)
-Route::post('/unidade/add', [PoloController::class, 'add']);
-Route::post('/unidade/update', [PoloController::class, 'update']);
-Route::post('/unidade/list', [PoloController::class, 'listAll']);
-Route::post('/unidade/listData', [PoloController::class, 'listData']);
-Route::post('/unidade/delete/{id}', [PoloController::class, 'delete']);
+// @deprecated — rotas /unidade/* mantidas para compatibilidade com frontend legado.
+// Usar /polo/* que aponta para o mesmo PoloController.
+Route::post('/unidade/add',          [PoloController::class, 'add']);
+Route::post('/unidade/update',       [PoloController::class, 'update']);
+Route::post('/unidade/list',         [PoloController::class, 'listAll']);
+Route::post('/unidade/listData',     [PoloController::class, 'listData']);
+Route::post('/unidade/delete/{id}',  [PoloController::class, 'delete']);
 Route::post('/unidade/toggleStatus', [PoloController::class, 'toggleStatus']);
 
-// Rotas antigas /polo para compatibilidade apontando para o mesmo controller
-Route::post('/polo/add', [PoloController::class, 'add']);
-Route::post('/polo/update', [PoloController::class, 'update']);
-Route::post('/polo/list', [PoloController::class, 'listAll']);
-Route::post('/polo/listData', [PoloController::class, 'listData']);
-Route::post('/polo/delete/{id}', [PoloController::class, 'delete']);
+// Rotas canônicas para polos
+Route::post('/polo/add',          [PoloController::class, 'add']);
+Route::post('/polo/update',       [PoloController::class, 'update']);
+Route::post('/polo/list',         [PoloController::class, 'listAll']);
+Route::post('/polo/listData',     [PoloController::class, 'listData']);
+Route::post('/polo/delete/{id}',  [PoloController::class, 'delete']);
 Route::post('/polo/toggleStatus', [PoloController::class, 'toggleStatus']);
 
 // Rotas antigas de unidades removidas - usar /setores

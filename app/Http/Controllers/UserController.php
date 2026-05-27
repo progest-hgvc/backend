@@ -15,48 +15,44 @@ class UserController extends Controller
 {
     public function add(UserRequest $request)
     {
-        // Pega os dados validados estritos
-        $validatedData = $request->validated()['user'];
-        // Pega tudo (para acessar os arrays de Setores que podem vir fora do objeto 'user')
-        $allData = $request->all(); 
+        $dadosValidados = $request->validated()['user'];
+        $dadosBrutos    = $request->all();
 
         DB::beginTransaction();
         try {
-            $user = new User;
-            $user->status = $validatedData['status'] ?? 'A';
-            $user->name = mb_strtoupper($validatedData['name']);
-            $user->email = mb_strtolower($validatedData['email']);
-            $user->telefone = isset($validatedData['telefone']) ? preg_replace('/\D/', '', $validatedData['telefone']) : null;
-            $user->data_nascimento = $validatedData['data_nascimento'] ?? null;
-            $user->cpf = preg_replace('/\D/', '', $validatedData['cpf']);
-            $user->tipo_vinculo = $validatedData['tipo_vinculo'] ?? null;
-            $user->password = Hash::make($validatedData['password']);
-            
+            $user                  = new User;
+            $user->status          = $dadosValidados['status'] ?? 'A';
+            $user->name            = mb_strtoupper($dadosValidados['name']);
+            $user->email           = mb_strtolower($dadosValidados['email']);
+            $user->telefone        = isset($dadosValidados['telefone']) ? preg_replace('/\D/', '', $dadosValidados['telefone']) : null;
+            $user->data_nascimento = $dadosValidados['data_nascimento'] ?? null;
+            $user->cpf             = preg_replace('/\D/', '', $dadosValidados['cpf']);
+            $user->tipo_vinculo    = $dadosValidados['tipo_vinculo'] ?? null;
+            $user->password        = Hash::make($dadosValidados['password']);
+
             $user->save();
 
-            // Lógica original de sincronização de Setores e Perfis
-            $this->syncSetores($user, $allData);
+            $this->sincronizarSetores($user, $dadosBrutos);
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erro ao salvar usuário e Setores: ' . $e->getMessage());
+            Log::error('Erro ao salvar usuário e setores: ' . $e->getMessage());
             return response()->json(['status' => false, 'message' => 'Erro ao salvar usuário.'], 500);
         }
 
-        // Retorna o usuário com os relacionamentos, igual ao código original
         $user = User::with(['setores' => function ($q) {
-            $q->select('Setores.id', 'Setores.unidade_id', 'Setores.nome', 'Setores.descricao', 'Setores.status', 'Setores.estoque', 'Setores.tipo');
+            $q->select('setores.id', 'setores.polo_id', 'setores.nome', 'setores.descricao', 'setores.status', 'setores.estoque', 'setores.tipo');
         }])->find($user->id);
 
         return response()->json(['status' => true, 'data' => $user]);
     }
 
     public function update(UserRequest $request)
-    {   
-        $validatedData = $request->validated()['user'];
-        $allData = $request->all();
-        $id = $validatedData['id'] ?? null; // ID precisa vir na requisição
+    {
+        $dadosValidados = $request->validated()['user'];
+        $dadosBrutos    = $request->all();
+        $id             = $dadosValidados['id'] ?? null;
 
         $user = User::find($id);
         if (!$user) {
@@ -65,32 +61,31 @@ class UserController extends Controller
 
         DB::beginTransaction();
         try {
-            $user->name = mb_strtoupper($validatedData['name']);
-            $user->email = mb_strtolower($validatedData['email']);
-            $user->telefone = isset($validatedData['telefone']) ? preg_replace('/\D/', '', $validatedData['telefone']) : null;
-            $user->data_nascimento = $validatedData['data_nascimento'] ?? null;
-            $user->cpf = preg_replace('/\D/', '', $validatedData['cpf']);
-            $user->status = $validatedData['status'] ?? $user->status;
-            $user->tipo_vinculo = $validatedData['tipo_vinculo'] ?? null;
+            $user->name            = mb_strtoupper($dadosValidados['name']);
+            $user->email           = mb_strtolower($dadosValidados['email']);
+            $user->telefone        = isset($dadosValidados['telefone']) ? preg_replace('/\D/', '', $dadosValidados['telefone']) : null;
+            $user->data_nascimento = $dadosValidados['data_nascimento'] ?? null;
+            $user->cpf             = preg_replace('/\D/', '', $dadosValidados['cpf']);
+            $user->status          = $dadosValidados['status'] ?? $user->status;
+            $user->tipo_vinculo    = $dadosValidados['tipo_vinculo'] ?? null;
 
-            if (!empty($validatedData['password'])) {
-                $user->password = Hash::make($validatedData['password']);
+            if (!empty($dadosValidados['password'])) {
+                $user->password = Hash::make($dadosValidados['password']);
             }
-            
+
             $user->save();
 
-            // Sincroniza Setores na edição também
-            $this->syncSetores($user, $allData);
+            $this->sincronizarSetores($user, $dadosBrutos);
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Erro ao atualizar usuário e Setores: ' . $e->getMessage());
+            Log::error('Erro ao atualizar usuário e setores: ' . $e->getMessage());
             return response()->json(['status' => false, 'message' => 'Erro ao atualizar usuário.'], 500);
         }
 
         $user = User::with(['setores' => function ($q) {
-            $q->select('Setores.id', 'Setores.unidade_id', 'Setores.nome', 'Setores.descricao', 'Setores.status', 'Setores.estoque', 'Setores.tipo');
+            $q->select('setores.id', 'setores.polo_id', 'setores.nome', 'setores.descricao', 'setores.status', 'setores.estoque', 'setores.tipo');
         }])->find($user->id);
 
         return response()->json(['status' => true, 'data' => $user]);
@@ -103,12 +98,12 @@ class UserController extends Controller
         // Busca textual multi-campo (name, email, cpf, telefone)
         $search = $request->input('search');
         if (!empty($search)) {
-            $searchTerm = '%' . $search . '%';
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'LIKE', $searchTerm)
-                  ->orWhere('email', 'LIKE', $searchTerm)
-                  ->orWhere('cpf', 'LIKE', $searchTerm)
-                  ->orWhere('telefone', 'LIKE', $searchTerm);
+            $termoBusca = '%' . $search . '%';
+            $query->where(function ($q) use ($termoBusca) {
+                $q->where('name', 'LIKE', $termoBusca)
+                  ->orWhere('email', 'LIKE', $termoBusca)
+                  ->orWhere('cpf', 'LIKE', $termoBusca)
+                  ->orWhere('telefone', 'LIKE', $termoBusca);
             });
         }
 
@@ -128,20 +123,20 @@ class UserController extends Controller
         $filters = $request->input('filters', []);
         foreach ($filters as $condition) {
             if (is_array($condition)) {
-                foreach ($condition as $column => $value) {
-                    $allowedColumns = ['name', 'email', 'cpf', 'telefone', 'status', 'tipo_vinculo'];
-                    if (in_array($column, $allowedColumns)) {
-                        $query->where($column, 'LIKE', '%' . $value . '%');
+                foreach ($condition as $coluna => $valor) {
+                    $colunasPermitidas = ['name', 'email', 'cpf', 'telefone', 'status', 'tipo_vinculo'];
+                    if (in_array($coluna, $colunasPermitidas)) {
+                        $query->where($coluna, 'LIKE', '%' . $valor . '%');
                     }
                 }
             }
         }
 
         // Ordenação dinâmica
-        $sortBy = $request->input('sort_by', 'name');
+        $sortBy  = $request->input('sort_by', 'name');
         $sortDir = $request->input('sort_dir', 'asc');
-        $allowedSortColumns = ['id', 'name', 'email', 'cpf', 'status', 'tipo_vinculo'];
-        if (in_array($sortBy, $allowedSortColumns) && in_array(strtolower($sortDir), ['asc', 'desc'])) {
+        $colunasOrdenacao = ['id', 'name', 'email', 'cpf', 'status', 'tipo_vinculo'];
+        if (in_array($sortBy, $colunasOrdenacao) && in_array(strtolower($sortDir), ['asc', 'desc'])) {
             $query->orderBy($sortBy, $sortDir);
         } else {
             $query->orderBy('name', 'asc');
@@ -157,7 +152,7 @@ class UserController extends Controller
     public function listData(Request $request)
     {
         $user = User::with(['setores' => function ($q) {
-            $q->select('Setores.id', 'Setores.unidade_id', 'Setores.nome', 'Setores.descricao', 'Setores.status', 'Setores.estoque', 'Setores.tipo');
+            $q->select('setores.id', 'setores.polo_id', 'setores.nome', 'setores.descricao', 'setores.status', 'setores.estoque', 'setores.tipo');
         }])->find($request->id);
 
         if (!$user) {
@@ -167,10 +162,10 @@ class UserController extends Controller
         $tipoVinculo = $user->tipo_vinculo ? TipoVinculo::find($user->tipo_vinculo) : null;
 
         return response()->json([
-            'status' => true,
-            'data' => $user,
+            'status'       => true,
+            'data'         => $user,
             'tipo_vinculo' => $tipoVinculo,
-            'Setores' => $user->setores,
+            'setores'      => $user->setores,
         ]);
     }
 
@@ -188,56 +183,61 @@ class UserController extends Controller
         $user->status = $user->status === 'A' ? 'I' : 'A';
         $user->save();
 
-        $action = $user->status === 'A' ? 'ativado' : 'desativado';
-        return response()->json(['status' => true, 'message' => "Usuário {$action} com sucesso.", 'data' => $user]);
+        $acao = $user->status === 'A' ? 'ativado' : 'desativado';
+        return response()->json(['status' => true, 'message' => "Usuário {$acao} com sucesso.", 'data' => $user]);
     }
 
     public function countUsers()
     {
-        $userCount = User::where('status', 'A')->count();
-        return response()->json(['count' => $userCount]);
+        $total = User::where('status', 'A')->count();
+        return response()->json(['count' => $total]);
     }
 
     /**
-     * Método auxiliar privado para reaproveitar a lógica de sincronização de setores
-     * que você já tinha construído perfeitamente no AuthController.
+     * Sincroniza os setores e perfis do usuário.
+     * Aceita os dados de setores dentro de 'setores' ou 'setores_ids' (snake_case).
      */
-    private function syncSetores(User $user, array $data)
+    private function sincronizarSetores(User $user, array $dados)
     {
-        $incoming = $data['Setores_ids'] ?? $data['Setores'] ?? [];
-        if (empty($incoming) && isset($data['user']) && is_array($data['user'])) {
-            $incoming = $data['user']['Setores_ids'] ?? $data['user']['Setores'] ?? [];
+        $setoresRecebidos = $dados['setores_ids'] ?? $dados['setores'] ?? [];
+        if (empty($setoresRecebidos) && isset($dados['user']) && is_array($dados['user'])) {
+            $setoresRecebidos = $dados['user']['setores_ids'] ?? $dados['user']['setores'] ?? [];
         }
 
-        if (is_array($incoming) && !empty($incoming)) {
-            $syncData = [];
-            foreach ($incoming as $item) {
-                $id = null;
-                $perfil = null;
-                if (is_array($item)) {
-                    $id = $item['id'] ?? ($item['setor_id'] ?? null);
-                    $perfil = $item['perfil'] ?? null;
-                } elseif (is_object($item)) {
-                    $id = $item->id ?? ($item->setor_id ?? null);
-                    $perfil = $item->perfil ?? null;
-                } else {
-                    $id = $item;
-                }
+        if (!is_array($setoresRecebidos) || empty($setoresRecebidos)) {
+            return;
+        }
 
-                if (!is_numeric($id) || $id <= 0) continue;
-                
-                $perfil = $perfil ?? 'solicitante';
-                $syncData[$id] = ['perfil' => $perfil];
+        $dadosSync = [];
+        foreach ($setoresRecebidos as $item) {
+            $setorId = null;
+            $perfil  = null;
+
+            if (is_array($item)) {
+                $setorId = $item['id'] ?? ($item['setor_id'] ?? null);
+                $perfil  = $item['perfil'] ?? null;
+            } elseif (is_object($item)) {
+                $setorId = $item->id ?? ($item->setor_id ?? null);
+                $perfil  = $item->perfil ?? null;
+            } else {
+                $setorId = $item;
             }
 
-            if (!empty($syncData)) {
-                $validIds = Setores::whereIn('id', array_keys($syncData))->pluck('id')->toArray();
-                $filtered = [];
-                foreach ($validIds as $vid) {
-                    $filtered[$vid] = $syncData[$vid];
-                }
-                $user->setores()->sync($filtered);
+            if (!is_numeric($setorId) || $setorId <= 0) {
+                continue;
             }
+
+            $perfil            = $perfil ?? 'solicitante';
+            $dadosSync[$setorId] = ['perfil' => $perfil];
+        }
+
+        if (!empty($dadosSync)) {
+            $idsValidos     = Setores::whereIn('id', array_keys($dadosSync))->pluck('id')->toArray();
+            $dadosFiltrados = [];
+            foreach ($idsValidos as $idValido) {
+                $dadosFiltrados[$idValido] = $dadosSync[$idValido];
+            }
+            $user->setores()->sync($dadosFiltrados);
         }
     }
 }

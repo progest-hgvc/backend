@@ -30,13 +30,13 @@ class RelatoriosController extends Controller
             $validator = Validator::make($data, [
                 'filters.date_from' => 'nullable|date',
                 'filters.date_to' => 'nullable|date|after_or_equal:filters.date_from',
-                'filters.unidade_id' => 'nullable|exists:unidades,id',
+                'filters.polo_id' => 'nullable|exists:polos,id',
                 'filters.setor_id' => 'nullable|exists:setores,id',
                 'filters.fornecedor_id' => 'nullable|exists:fornecedores,id',
                 'filters.nota_fiscal' => 'nullable|string|max:255',
             ], [
                 'filters.date_to.after_or_equal' => 'A data final deve ser posterior ou igual à data inicial.',
-                'filters.unidade_id.exists' => 'Unidade não encontrada.',
+                'filters.polo_id.exists' => 'Polo não encontrado.',
                 'filters.setor_id.exists' => 'Setor não encontrado.',
                 'filters.fornecedor_id.exists' => 'Fornecedor não encontrado.',
             ]);
@@ -52,8 +52,8 @@ class RelatoriosController extends Controller
             // Query base com eager loading para evitar N+1
             $query = Entrada::with([
                 'fornecedor:id,razao_social_nome,cnpj',
-                'setor:id,nome,tipo,unidade_id',
-                'setor.unidade:id,nome',
+                'setor:id,nome,tipo,polo_id',
+                'setor.polo:id,nome',
                 'itens.produto:id,nome,codigo_simpras,codigo_barras,grupo_produto_id,unidade_medida_id',
                 'itens.produto.unidadeMedida:id,nome',
                 'itens.produto.grupoProduto:id,nome,tipo'
@@ -77,9 +77,9 @@ class RelatoriosController extends Controller
                 $query->whereDate('created_at', '<=', $filters['date_to']);
             }
 
-            if (!empty($filters['unidade_id'])) {
+            if (!empty($filters['polo_id'])) {
                 $query->whereHas('setor', function ($q) use ($filters) {
-                    $q->where('unidade_id', $filters['unidade_id']);
+                    $q->where('polo_id', $filters['polo_id']);
                 });
             }
 
@@ -139,7 +139,7 @@ class RelatoriosController extends Controller
             $validator = Validator::make($data, [
                 'filters.date_from' => 'nullable|date',
                 'filters.date_to' => 'nullable|date|after_or_equal:filters.date_from',
-                'filters.unidade_id' => 'nullable|exists:unidades,id',
+                'filters.polo_id' => 'nullable|exists:polos,id',
                 'filters.setor_id' => 'nullable|exists:setores,id',
                 'filters.tipo' => 'nullable|string|in:T,S,D',
                 'filters.setor_origem_id' => 'nullable|exists:setores,id',
@@ -147,7 +147,7 @@ class RelatoriosController extends Controller
                 'filters.status' => 'nullable|string|in:A,I',
             ], [
                 'filters.date_to.after_or_equal' => 'A data final deve ser posterior ou igual à data inicial.',
-                'filters.unidade_id.exists' => 'Unidade não encontrada.',
+                'filters.polo_id.exists' => 'Polo não encontrado.',
                 'filters.setor_id.exists' => 'Setor não encontrado.',
                 'filters.tipo.in' => 'Tipo de movimentação inválido. Use: T (Transferência), S (Saída) ou D (Devolução).',
                 'filters.setor_origem_id.exists' => 'Setor de origem não encontrado.',
@@ -165,10 +165,10 @@ class RelatoriosController extends Controller
 
             // Query base com eager loading para evitar N+1
             $query = Movimentacao::with([
-                'setorOrigem:id,nome,tipo,unidade_id',
-                'setorOrigem.unidade:id,nome',
-                'setorDestino:id,nome,tipo,unidade_id',
-                'setorDestino.unidade:id,nome',
+                'setorOrigem:id,nome,tipo,polo_id',
+                'setorOrigem.polo:id,nome',
+                'setorDestino:id,nome,tipo,polo_id',
+                'setorDestino.polo:id,nome',
                 'usuario:id,name,email',
                 'aprovador:id,name,email',
                 'itens.produto:id,nome,codigo_simpras,codigo_barras,grupo_produto_id,unidade_medida_id',
@@ -201,13 +201,13 @@ class RelatoriosController extends Controller
                 $query->where('tipo', $filters['tipo']);
             }
 
-            // Filtro de unidade: considera origem OU destino
-            if (!empty($filters['unidade_id'])) {
+            // Filtro de polo: considera origem OU destino
+            if (!empty($filters['polo_id'])) {
                 $query->where(function ($q) use ($filters) {
                     $q->whereHas('setorOrigem', function ($sq) use ($filters) {
-                        $sq->where('unidade_id', $filters['unidade_id']);
+                        $sq->where('polo_id', $filters['polo_id']);
                     })->orWhereHas('setorDestino', function ($sq) use ($filters) {
-                        $sq->where('unidade_id', $filters['unidade_id']);
+                        $sq->where('polo_id', $filters['polo_id']);
                     });
                 });
             }
@@ -245,7 +245,7 @@ class RelatoriosController extends Controller
                         // Buscar informações do lote na tabela estoque_lote
                         $loteInfo = \App\Models\EstoqueLote::where('produto_id', $item->produto_id)
                             ->where('lote', $item->lote)
-                            ->where('unidade_id', $movimentacao->setor_destino_id) // Setor que forneceu
+                            ->where('setor_id', $movimentacao->setor_destino_id) // Setor que forneceu
                             ->first(['data_fabricacao', 'data_vencimento']);
                         
                         if ($loteInfo) {
@@ -299,14 +299,14 @@ class RelatoriosController extends Controller
             $validator = Validator::make($data, [
                 'filters.date_from' => 'nullable|date',
                 'filters.date_to' => 'nullable|date|after_or_equal:filters.date_from',
-                'filters.unidade_id' => 'nullable|exists:unidades,id',
+                'filters.polo_id' => 'nullable|exists:polos,id',
                 'filters.setor_id' => 'nullable|exists:setores,id',
                 'filters.setor_origem_id' => 'nullable|exists:setores,id',
                 'filters.produto_id' => 'nullable|exists:produtos,id',
                 'filters.status' => 'nullable|string|in:A,R,P,C,X',
             ], [
                 'filters.date_to.after_or_equal' => 'A data final deve ser posterior ou igual à data inicial.',
-                'filters.unidade_id.exists' => 'Unidade não encontrada.',
+                'filters.polo_id.exists' => 'Polo não encontrado.',
                 'filters.setor_id.exists' => 'Setor não encontrado.',
                 'filters.setor_origem_id.exists' => 'Setor de origem não encontrado.',
                 'filters.produto_id.exists' => 'Produto não encontrado.',
@@ -324,10 +324,10 @@ class RelatoriosController extends Controller
             // Query base com eager loading para evitar N+1
             // Filtra apenas movimentações do tipo 'S' (Saída)
             $query = Movimentacao::with([
-                'setorOrigem:id,nome,tipo,unidade_id',
-                'setorOrigem.unidade:id,nome',
-                'setorDestino:id,nome,tipo,unidade_id',
-                'setorDestino.unidade:id,nome',
+                'setorOrigem:id,nome,tipo,polo_id',
+                'setorOrigem.polo:id,nome',
+                'setorDestino:id,nome,tipo,polo_id',
+                'setorDestino.polo:id,nome',
                 'usuario:id,name,email',
                 'aprovador:id,name,email',
                 'itens.produto:id,nome,codigo_simpras,codigo_barras,grupo_produto_id,unidade_medida_id',
@@ -356,13 +356,13 @@ class RelatoriosController extends Controller
                 $query->whereDate('data_hora', '<=', $filters['date_to']);
             }
 
-            // Filtro de unidade: considera origem OU destino
-            if (!empty($filters['unidade_id'])) {
+            // Filtro de polo: considera origem OU destino
+            if (!empty($filters['polo_id'])) {
                 $query->where(function ($q) use ($filters) {
                     $q->whereHas('setorOrigem', function ($sq) use ($filters) {
-                        $sq->where('unidade_id', $filters['unidade_id']);
+                        $sq->where('polo_id', $filters['polo_id']);
                     })->orWhereHas('setorDestino', function ($sq) use ($filters) {
-                        $sq->where('unidade_id', $filters['unidade_id']);
+                        $sq->where('polo_id', $filters['polo_id']);
                     });
                 });
             }
@@ -403,7 +403,7 @@ class RelatoriosController extends Controller
                         // Buscar informações do lote na tabela estoque_lote
                         $loteInfo = \App\Models\EstoqueLote::where('produto_id', $item->produto_id)
                             ->where('lote', $item->lote)
-                            ->where('unidade_id', $movimentacao->setor_destino_id) // Setor que forneceu
+                            ->where('setor_id', $movimentacao->setor_destino_id) // Setor que forneceu
                             ->first(['data_fabricacao', 'data_vencimento']);
                         
                         if ($loteInfo) {
@@ -463,12 +463,12 @@ class RelatoriosController extends Controller
             $validator = Validator::make($data, [
                 'filters.date_from' => 'nullable|date',
                 'filters.date_to' => 'nullable|date|after_or_equal:filters.date_from',
-                'filters.unidade_id' => 'nullable|exists:unidades,id',
+                'filters.polo_id' => 'nullable|exists:polos,id',
                 'filters.setor_id' => 'nullable|exists:setores,id',
                 'filters.produto_id' => 'nullable|exists:produtos,id',
             ], [
                 'filters.date_to.after_or_equal' => 'A data final deve ser posterior ou igual à data inicial.',
-                'filters.unidade_id.exists' => 'Unidade não encontrada.',
+                'filters.polo_id.exists' => 'Polo não encontrado.',
                 'filters.setor_id.exists' => 'Setor não encontrado.',
                 'filters.produto_id.exists' => 'Produto não encontrado.',
             ]);
@@ -523,18 +523,18 @@ class RelatoriosController extends Controller
                 });
 
             // Aplicar filtros opcionais
-            if (!empty($filters['unidade_id'])) {
+            if (!empty($filters['polo_id'])) {
                 $query->where(function ($q) use ($filters) {
                     $q->whereExists(function ($subq) use ($filters) {
                         $subq->select(DB::raw(1))
                              ->from('setores as so')
                              ->whereRaw('so.id = m.setor_origem_id')
-                             ->where('so.unidade_id', $filters['unidade_id']);
+                             ->where('so.polo_id', $filters['polo_id']);
                     })->orWhereExists(function ($subq) use ($filters) {
                         $subq->select(DB::raw(1))
                              ->from('setores as sd')
                              ->whereRaw('sd.id = m.setor_destino_id')
-                             ->where('sd.unidade_id', $filters['unidade_id']);
+                             ->where('sd.polo_id', $filters['polo_id']);
                     });
                 });
             }
@@ -689,13 +689,13 @@ class RelatoriosController extends Controller
             $validator = Validator::make($data, [
                 'filters.date_from' => 'nullable|date',
                 'filters.date_to' => 'nullable|date|after_or_equal:filters.date_from',
-                'filters.unidade_id' => 'nullable|exists:unidades,id',
+                'filters.polo_id' => 'nullable|exists:polos,id',
                 'filters.setor_id' => 'nullable|exists:setores,id',
                 'filters.fornecedor_id' => 'nullable|exists:fornecedores,id',
                 'filters.produto_id' => 'nullable|exists:produtos,id',
             ], [
                 'filters.date_to.after_or_equal' => 'A data final deve ser posterior ou igual à data inicial.',
-                'filters.unidade_id.exists' => 'Unidade não encontrada.',
+                'filters.polo_id.exists' => 'Polo não encontrado.',
                 'filters.setor_id.exists' => 'Setor não encontrado.',
                 'filters.fornecedor_id.exists' => 'Fornecedor não encontrado.',
                 'filters.produto_id.exists' => 'Produto não encontrado.',
@@ -746,12 +746,12 @@ class RelatoriosController extends Controller
                 ->whereIn('e.setor_id', $setoresPermitidos);
 
             // Aplicar filtros opcionais
-            if (!empty($filters['unidade_id'])) {
+            if (!empty($filters['polo_id'])) {
                 $query->whereExists(function ($subq) use ($filters) {
                     $subq->select(DB::raw(1))
                          ->from('setores as s')
                          ->whereRaw('s.id = e.setor_id')
-                         ->where('s.unidade_id', $filters['unidade_id']);
+                         ->where('s.polo_id', $filters['polo_id']);
                 });
             }
 
@@ -895,7 +895,7 @@ class RelatoriosController extends Controller
             
             // Validação dos filtros
             $validator = Validator::make($data, [
-                'filters.unidade_id' => 'nullable|exists:unidades,id',
+                'filters.polo_id' => 'nullable|exists:polos,id',
                 'filters.setor_id' => 'nullable|exists:setores,id',
                 'filters.produto_id' => 'nullable|exists:produtos,id',
                 'filters.tipo' => 'nullable|string|in:Medicamento,Material',
@@ -903,7 +903,7 @@ class RelatoriosController extends Controller
                 'filters.abaixo_minimo' => 'nullable|boolean',
                 'filters.dias_vencimento' => 'nullable|integer|min:1|max:365',
             ], [
-                'filters.unidade_id.exists' => 'Unidade não encontrada.',
+                'filters.polo_id.exists' => 'Polo não encontrado.',
                 'filters.setor_id.exists' => 'Setor não encontrado.',
                 'filters.produto_id.exists' => 'Produto não encontrado.',
                 'filters.tipo.in' => 'Tipo inválido. Use: Medicamento ou Material.',
@@ -927,8 +927,8 @@ class RelatoriosController extends Controller
                 'produto:id,nome,codigo_simpras,codigo_barras,grupo_produto_id,unidade_medida_id',
                 'produto.grupoProduto:id,nome,tipo',
                 'produto.unidadeMedida:id,nome',
-                'setor:id,unidade_id,nome,tipo',
-                'setor.unidade:id,nome'
+                'setor:id,polo_id,nome,tipo',
+                'setor.polo:id,nome'
             ]);
 
             // Restringir aos setores que o usuário autenticado tem acesso
@@ -936,22 +936,22 @@ class RelatoriosController extends Controller
             $setoresPermitidos = \Illuminate\Support\Facades\DB::table('usuario_setor')
                 ->where('usuario_id', $user->id)
                 ->pluck('setor_id');
-            // Na tabela estoque, 'unidade_id' na verdade é o setor_id
-            $query->whereIn('estoque.unidade_id', $setoresPermitidos);
+            // Na tabela estoque, 'setor_id' referencia setores.id
+            $query->whereIn('estoque.setor_id', $setoresPermitidos);
 
             // Aplicar filtros se fornecidos
             $filters = $data['filters'] ?? [];
 
-            // Filtro por unidade (polo)
-            if (!empty($filters['unidade_id'])) {
+            // Filtro por polo
+            if (!empty($filters['polo_id'])) {
                 $query->whereHas('setor', function ($q) use ($filters) {
-                    $q->where('unidade_id', $filters['unidade_id']);
+                    $q->where('polo_id', $filters['polo_id']);
                 });
             }
 
-            // Filtro por setor (unidade_id na tabela estoque é o setor)
+            // Filtro por setor
             if (!empty($filters['setor_id'])) {
-                $query->where('unidade_id', $filters['setor_id']);
+                $query->where('setor_id', $filters['setor_id']);
             }
 
             if (!empty($filters['produto_id'])) {
@@ -975,7 +975,7 @@ class RelatoriosController extends Controller
             }
 
             // Ordenação: por nome do produto e depois por setor
-            $query->join('setores as s', 'estoque.unidade_id', '=', 's.id')
+            $query->join('setores as s', 'estoque.setor_id', '=', 's.id')
                   ->join('produtos as p', 'estoque.produto_id', '=', 'p.id')
                   ->orderBy('p.nome', 'asc')
                   ->orderBy('s.nome', 'asc')
@@ -987,7 +987,7 @@ class RelatoriosController extends Controller
             // Buscar lotes para cada item do estoque
             $items = collect($results)->map(function ($estoque) use ($filters) {
                 // Buscar lotes deste produto neste setor
-                $lotesQuery = \App\Models\EstoqueLote::where('unidade_id', $estoque->unidade_id)
+                $lotesQuery = \App\Models\EstoqueLote::where('setor_id', $estoque->setor_id)
                     ->where('produto_id', $estoque->produto_id)
                     ->where('quantidade_disponivel', '>', 0)
                     ->orderBy('data_vencimento', 'asc');
@@ -1100,8 +1100,8 @@ class RelatoriosController extends Controller
             // Query base com eager loading para evitar N+1
             $query = \App\Models\User::with([
                 'tipoVinculo:id,nome,descricao,status',
-                'setores:id,nome,tipo,unidade_id',
-                'setores.unidade:id,nome'
+                'setores:id,nome,tipo,polo_id',
+                'setores.polo:id,nome'
             ]);
 
             // Aplicar filtros se fornecidos

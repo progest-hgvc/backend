@@ -103,7 +103,7 @@ class EntradaController extends Controller
 
                     // Evitando Lost Update na Entrada
                     $estoqueBase = Estoque::firstOrCreate(
-                        ['produto_id' => $produto->id, 'unidade_id' => $setor->id],
+                        ['produto_id' => $produto->id, 'setor_id' => $setor->id],
                         ['quantidade_atual' => 0, 'quantidade_minima' => 0, 'status_disponibilidade' => 'D']
                     );
 
@@ -116,7 +116,7 @@ class EntradaController extends Controller
                     // Atualizar ou criar registro de estoque por lote
                     $estoqueLote = EstoqueLote::firstOrCreate(
                         [
-                            'unidade_id' => $setor->id,
+                            'setor_id' => $setor->id,
                             'produto_id' => $produto->id,
                             'lote' => mb_strtoupper(trim($item['lote'])),
                         ],
@@ -291,7 +291,7 @@ class EntradaController extends Controller
                 foreach ($entrada->itens as $itemExistente) {
                     // Reverter estoque geral
                     $estoque = Estoque::where('produto_id', $itemExistente->produto_id)
-                        ->where('unidade_id', $entrada->setor_id)
+                        ->where('setor_id', $entrada->setor_id)
                         ->first();
 
                     if ($estoque) {
@@ -305,7 +305,7 @@ class EntradaController extends Controller
 
                     // Reverter estoque de lote
                     if ($itemExistente->lote) {
-                        $estoqueLote = EstoqueLote::where('unidade_id', $entrada->setor_id)
+                        $estoqueLote = EstoqueLote::where('setor_id', $entrada->setor_id)
                             ->where('produto_id', $itemExistente->produto_id)
                             ->where('lote', $itemExistente->lote)
                             ->first();
@@ -351,7 +351,7 @@ class EntradaController extends Controller
                     $estoque = Estoque::firstOrCreate(
                         [
                             'produto_id' => $produto->id,
-                            'unidade_id' => $setor->id,
+                            'setor_id' => $setor->id,
                         ],
                         [
                             'quantidade_atual' => 0,
@@ -367,7 +367,7 @@ class EntradaController extends Controller
                     // Atualizar ou criar estoque de lote
                     $estoqueLote = EstoqueLote::firstOrCreate(
                         [
-                            'unidade_id' => $setor->id,
+                            'setor_id' => $setor->id,
                             'produto_id' => $produto->id,
                             'lote' => mb_strtoupper(trim($item['lote'])),
                         ],
@@ -438,7 +438,7 @@ class EntradaController extends Controller
 
                 foreach ($entrada->itens as $item) {
                     $estoque = Estoque::where('produto_id', $item->produto_id)
-                        ->where('unidade_id', $entrada->setor_id)
+                        ->where('setor_id', $entrada->setor_id)
                         ->first();
 
                     if ($estoque) {

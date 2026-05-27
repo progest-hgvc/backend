@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Validator;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
 
 class SetoresController
 {
@@ -44,21 +43,21 @@ class SetoresController
             ], 422);
         }
 
-        $Setores = new Setores;
-        $Setores->polo_id        = $setoresData['polo_id'];
-        $Setores->nome           = mb_strtoupper($setoresData['nome']);
-        $Setores->descricao      = $setoresData['descricao'] ?? '';
-        $Setores->status         = $setoresData['status'] ?? 'A';
-        $Setores->estoque        = $setoresData['estoque'] ?? false;
-        $Setores->tipo           = $setoresData['tipo'] ?? 'Material';
+        $setor = new Setores;
+        $setor->polo_id   = $setoresData['polo_id'];
+        $setor->nome      = mb_strtoupper($setoresData['nome']);
+        $setor->descricao = $setoresData['descricao'] ?? '';
+        $setor->status    = $setoresData['status'] ?? 'A';
+        $setor->estoque   = $setoresData['estoque'] ?? false;
+        $setor->tipo      = $setoresData['tipo'] ?? 'Material';
 
         try {
             DB::beginTransaction();
 
-            $Setores->save();
+            $setor->save();
 
             // Se enviar dados de distribuidor junto com a criação do setor
-            // Esperamos um payload opcional: $data['distribuidor'] => ['setor_distribuidor_id' => <id do setor distribuidor>]
+            // Payload opcional: $data['distribuidor'] => ['setor_distribuidor_id' => <id>]
             if (isset($data['distribuidor']) && is_array($data['distribuidor'])) {
                 $distribuidorData = $data['distribuidor'];
 
@@ -69,36 +68,36 @@ class SetoresController
                 if ($validatorDistribuidor->fails()) {
                     DB::rollBack();
                     return response()->json([
-                        'status' => false,
+                        'status'   => false,
                         'validacao' => true,
-                        'erros' => $validatorDistribuidor->errors()
+                        'erros'    => $validatorDistribuidor->errors()
                     ], 422);
                 }
 
                 $distribuidorSetorId = $distribuidorData['setor_distribuidor_id'];
-                $exists = DB::table('setor_distribuidor')
-                    ->where('setor_solicitante_id', $Setores->id)
+                $existe = DB::table('setor_distribuidor')
+                    ->where('setor_solicitante_id', $setor->id)
                     ->where('setor_distribuidor_id', $distribuidorSetorId)
                     ->exists();
 
-                if (!$exists) {
+                if (!$existe) {
                     DB::table('setor_distribuidor')->insert([
-                        'setor_solicitante_id' => $Setores->id,
+                        'setor_solicitante_id'  => $setor->id,
                         'setor_distribuidor_id' => $distribuidorSetorId,
-                        'created_at' => now(),
-                        'updated_at' => now(),
+                        'created_at'            => now(),
+                        'updated_at'            => now(),
                     ]);
                 }
             }
 
             DB::commit();
 
-            return ['status' => true, 'data' => $Setores];
+            return ['status' => true, 'data' => $setor];
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erro ao criar setor com distribuidor: ' . $e->getMessage());
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Erro ao criar setor'
             ], 500);
         }
@@ -106,32 +105,32 @@ class SetoresController
 
     public function listAll(Request $request)
     {
-        $data = $request->all();
+        $data    = $request->all();
         $filters = $data['filters'] ?? [];
 
         // Eager load distribuidores relacionados
-        $SetoresQuery = Setores::with(['polo', 'distribuidoresRelacionados.distribuidor']);
+        $query = Setores::with(['polo', 'distribuidoresRelacionados.distribuidor']);
 
         foreach ($filters as $condition) {
-            foreach ($condition as $column => $value) {
-                $SetoresQuery->where($column, $value);
+            foreach ($condition as $coluna => $valor) {
+                $query->where($coluna, $valor);
             }
         }
 
         if (!isset($data['paginate'])) {
-            $Setores = $SetoresQuery
+            $setores = $query
                 ->select('id', 'polo_id', 'nome', 'descricao', 'status', 'estoque', 'tipo')
                 ->orderBy('nome')
                 ->get();
         } else {
-            $per_page = $data['per_page'] ?? 50;
-            $Setores = $SetoresQuery
+            $perPage = $data['per_page'] ?? 50;
+            $setores = $query
                 ->select('id', 'polo_id', 'nome', 'descricao', 'status', 'estoque', 'tipo')
                 ->orderBy('nome')
-                ->paginate($per_page);
+                ->paginate($perPage);
         }
 
-        return ['status' => true, 'data' => $Setores];
+        return ['status' => true, 'data' => $setores];
     }
 
     public function update(Request $request)
@@ -163,90 +162,86 @@ class SetoresController
             ], 422);
         }
 
-        $Setores = Setores::find($setoresData['id']);
+        $setor = Setores::find($setoresData['id']);
 
-        if (!$Setores) {
+        if (!$setor) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Setor não encontrado.'
             ], 404);
         }
 
-        $Setores->polo_id        = $setoresData['polo_id'];
-        $Setores->nome           = mb_strtoupper($setoresData['nome']);
-        $Setores->descricao      = $setoresData['descricao'] ?? '';
-        $Setores->status         = $setoresData['status'] ?? 'A';
-        $Setores->estoque        = $setoresData['estoque'] ?? $Setores->estoque;
-        $Setores->tipo           = $setoresData['tipo'] ?? $Setores->tipo;
+        $setor->polo_id   = $setoresData['polo_id'];
+        $setor->nome      = mb_strtoupper($setoresData['nome']);
+        $setor->descricao = $setoresData['descricao'] ?? '';
+        $setor->status    = $setoresData['status'] ?? 'A';
+        $setor->estoque   = $setoresData['estoque'] ?? $setor->estoque;
+        $setor->tipo      = $setoresData['tipo'] ?? $setor->tipo;
 
         try {
             DB::beginTransaction();
 
-            $Setores->save();
+            $setor->save();
 
             // Se foram enviados distribuidores para atualizar/definir
-            // Esperamos: $data['distribuidores'] = [ ['setor_distribuidor_id' => <setor id distribuidor>], ... ]
+            // Payload: $data['distribuidores'] = [ ['setor_distribuidor_id' => <id>], ... ]
             if (isset($data['distribuidores']) && is_array($data['distribuidores'])) {
-                Log::info('Atualizando distribuidores do setor ' . $Setores->id, [
+                Log::info('Atualizando distribuidores do setor ' . $setor->id, [
                     'distribuidores_recebidos' => $data['distribuidores']
                 ]);
 
-                $incoming = $data['distribuidores'];
+                $distribuidoresRecebidos = $data['distribuidores'];
 
                 // Buscar relacionamentos atuais
-                $current = DB::table('setor_distribuidor')->where('setor_solicitante_id', $Setores->id)->get();
+                $relacoes = DB::table('setor_distribuidor')->where('setor_solicitante_id', $setor->id)->get();
 
-                // Mapear distribuidores enviados
-                $incomingDistribuidorIds = array_map(function ($f) {
-                    return $f['setor_distribuidor_id'] ?? null;
-                }, $incoming);
-                $incomingDistribuidorIds = array_filter($incomingDistribuidorIds);
+                // IDs dos distribuidores enviados
+                $idsDistribuidores = array_filter(array_map(function ($d) {
+                    return $d['setor_distribuidor_id'] ?? null;
+                }, $distribuidoresRecebidos));
 
                 Log::info('Distribuidores atuais vs novos', [
-                    'atuais' => $current->pluck('setor_distribuidor_id')->toArray(),
-                    'novos' => $incomingDistribuidorIds
+                    'atuais' => $relacoes->pluck('setor_distribuidor_id')->toArray(),
+                    'novos'  => $idsDistribuidores
                 ]);
 
-                // Deletar relações que não foram enviadas (removidas pelo cliente)
-                foreach ($current as $cur) {
-                    if (!in_array($cur->setor_distribuidor_id, $incomingDistribuidorIds)) {
+                // Deletar relações que não vieram no payload
+                foreach ($relacoes as $relacaoAtual) {
+                    if (!in_array($relacaoAtual->setor_distribuidor_id, $idsDistribuidores)) {
                         Log::info('Removendo distribuidor', [
-                            'relacionamento_id' => $cur->id,
-                            'setor_distribuidor_id' => $cur->setor_distribuidor_id
+                            'relacionamento_id'     => $relacaoAtual->id,
+                            'setor_distribuidor_id' => $relacaoAtual->setor_distribuidor_id
                         ]);
-                        DB::table('setor_distribuidor')->where('id', $cur->id)->delete();
+                        DB::table('setor_distribuidor')->where('id', $relacaoAtual->id)->delete();
                     }
                 }
 
-                // Processar incoming: criar apenas os novos (duplicatas serão ignoradas pela constraint unique)
-                foreach ($incoming as $f) {
-                    /** @var array $f */
-                    $validatorF = Validator::make($f, [
+                // Criar apenas os novos relacionamentos
+                foreach ($distribuidoresRecebidos as $item) {
+                    $validador = Validator::make($item, [
                         'setor_distribuidor_id' => 'required|exists:setores,id',
                     ]);
 
-                    if ($validatorF->fails()) {
+                    if ($validador->fails()) {
                         DB::rollBack();
                         return response()->json([
-                            'status' => false,
+                            'status'   => false,
                             'validacao' => true,
-                            'erros' => $validatorF->errors()
+                            'erros'    => $validador->errors()
                         ], 422);
                     }
 
-                    // Verificar se já existe esse relacionamento
-                    $exists = DB::table('setor_distribuidor')
-                        ->where('setor_solicitante_id', $Setores->id)
-                        ->where('setor_distribuidor_id', $f['setor_distribuidor_id'])
+                    $existe = DB::table('setor_distribuidor')
+                        ->where('setor_solicitante_id', $setor->id)
+                        ->where('setor_distribuidor_id', $item['setor_distribuidor_id'])
                         ->exists();
 
-                    if (!$exists) {
-                        // Criar novo relacionamento
+                    if (!$existe) {
                         DB::table('setor_distribuidor')->insert([
-                            'setor_solicitante_id' => $Setores->id,
-                            'setor_distribuidor_id' => $f['setor_distribuidor_id'],
-                            'created_at' => now(),
-                            'updated_at' => now(),
+                            'setor_solicitante_id'  => $setor->id,
+                            'setor_distribuidor_id' => $item['setor_distribuidor_id'],
+                            'created_at'            => now(),
+                            'updated_at'            => now(),
                         ]);
                     }
                 }
@@ -254,7 +249,7 @@ class SetoresController
 
             DB::commit();
 
-            return ['status' => true, 'data' => Setores::with(['polo', 'distribuidoresRelacionados.distribuidor'])->find($Setores->id)];
+            return ['status' => true, 'data' => Setores::with(['polo', 'distribuidoresRelacionados.distribuidor'])->find($setor->id)];
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Erro ao atualizar setor: ' . $e->getMessage());
@@ -418,39 +413,17 @@ class SetoresController
             // Transformar para garantir o formato esperado pelo frontend
             $result = $setor->toArray();
 
-            $distribuidores = [];
-            foreach ($setor->distribuidoresRelacionados as $rel) {
-                $distribuidorObj = null;
-                if ($rel->distribuidor) {
-                    $distribuidorObj = [
-                        'id' => $rel->distribuidor->id,
-                        'nome' => $rel->distribuidor->nome ?? null,
-                        'descricao' => $rel->distribuidor->descricao ?? null,
-                        'tipo' => $rel->distribuidor->tipo ?? null,
-                        'estoque' => isset($rel->distribuidor->estoque) ? (bool) $rel->distribuidor->estoque : null,
-                    ];
-                }
-
-                $distribuidores[] = [
-                    'id' => $rel->id,
-                    'setor_distribuidor_id' => $rel->setor_distribuidor_id,
-                    'created_at' => $rel->created_at ? $rel->created_at->toDateTimeString() : null,
-                    'updated_at' => $rel->updated_at ? $rel->updated_at->toDateTimeString() : null,
-                    'distribuidor' => $distribuidorObj,
-                ];
-            }
-
             // Garantir chave consistente para o front
-            $result['distribuidores_relacionados'] = $distribuidores;
+            $result['distribuidores_relacionados'] = $this->formatarDistribuidores($setor->distribuidoresRelacionados);
 
             return response()->json([
                 'status' => true,
-                'data' => $result
+                'data'   => $result
             ]);
         } catch (\Exception $e) {
             Log::error('Erro ao obter detalhes do setor: ' . $e->getMessage());
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Erro ao obter detalhes do setor'
             ], 500);
         }
@@ -508,74 +481,48 @@ class SetoresController
     public function listData(Request $request)
     {
         $data = $request->all();
-        $dataID = $data['id'];
+        $id   = $data['id'];
 
-        // Carregar setor com distribuidores relacionados e dados do distribuidor
-        $Setores = Setores::with(['polo', 'distribuidoresRelacionados.distribuidor'])->find($dataID);
+        $setor = Setores::with(['polo', 'distribuidoresRelacionados.distribuidor'])->find($id);
 
-        if (!$Setores) {
+        if (!$setor) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Setor não encontrado.'
             ], 404);
         }
 
-        // Transformar para garantir o formato esperado pelo frontend
-        $result = $Setores->toArray();
-
-        $distribuidores = [];
-        foreach ($Setores->distribuidoresRelacionados as $rel) {
-            $distribuidorObj = null;
-            if ($rel->distribuidor) {
-                $distribuidorObj = [
-                    'id' => $rel->distribuidor->id,
-                    'nome' => $rel->distribuidor->nome ?? null,
-                    'descricao' => $rel->distribuidor->descricao ?? null,
-                    'tipo' => $rel->distribuidor->tipo ?? null,
-                    'estoque' => isset($rel->distribuidor->estoque) ? (bool) $rel->distribuidor->estoque : null,
-                ];
-            }
-
-            $distribuidores[] = [
-                'id' => $rel->id,
-                'setor_distribuidor_id' => $rel->setor_distribuidor_id,
-                'created_at' => $rel->created_at ? $rel->created_at->toDateTimeString() : null,
-                'updated_at' => $rel->updated_at ? $rel->updated_at->toDateTimeString() : null,
-                'distribuidor' => $distribuidorObj,
-            ];
-        }
-
-        // Garantir chave consistente para o front
-        $result['distribuidores_relacionados'] = $distribuidores;
+        $result = $setor->toArray();
+        $result['distribuidores_relacionados'] = $this->formatarDistribuidores($setor->distribuidoresRelacionados);
 
         return ['status' => true, 'data' => $result];
     }
 
     public function delete($id)
     {
-        $Setores = Setores::find($id);
+        $setor = Setores::find($id);
 
-        if (!$Setores) {
+        if (!$setor) {
             return response()->json([
-                'status' => false,
+                'status'  => false,
                 'message' => 'Setor não encontrado.'
             ], 404);
         }
 
         // Verificar referências antes de deletar
-        $references = $this->checkSetoresReferences($id);
-        if (!empty($references)) {
+        $referencias = $this->checkSetoresReferences($id);
+        if (!empty($referencias)) {
             return response()->json([
-                'status' => false,
-                'message' => 'Não é possível excluir este setor pois ele possui registros relacionados no sistema.',
-                'references' => $references
+                'status'     => false,
+                'message'    => 'Não é possível excluir este setor pois ele possui registros relacionados no sistema.',
+                'references' => $referencias
             ], 422);
         }
 
-        $Setores->delete();
+        $setor->delete();
 
         return response()->json([
-            'status' => true,
+            'status'  => true,
             'message' => 'Setor excluído com sucesso.'
         ], 200);
     }
@@ -621,27 +568,53 @@ class SetoresController
 
     private function checkSetoresReferences($id)
     {
-        $references = [];
+        $referencias = [];
 
-        // Verificar estoque vinculado ao setor
         $estoqueCount = DB::table('estoque')->where('polo_id', $id)->count();
         if ($estoqueCount > 0) {
-            $references[] = 'estoque (' . $estoqueCount . ' itens)';
+            $referencias[] = 'estoque (' . $estoqueCount . ' itens)';
         }
 
-        // Verificar movimentações como origem
         $movOrigemCount = DB::table('movimentacao')->where('polo_origem_id', $id)->count();
         if ($movOrigemCount > 0) {
-            $references[] = 'movimentações de origem (' . $movOrigemCount . ')';
+            $referencias[] = 'movimentações de origem (' . $movOrigemCount . ')';
         }
 
-        // Verificar movimentações como destino
         $movDestinoCount = DB::table('movimentacao')->where('polo_destino_id', $id)->count();
         if ($movDestinoCount > 0) {
-            $references[] = 'movimentações de destino (' . $movDestinoCount . ')';
+            $referencias[] = 'movimentações de destino (' . $movDestinoCount . ')';
         }
 
-        return $references;
+        return $referencias;
+    }
+
+    /**
+     * Formata a coleção de distribuidores relacionados para o formato esperado pelo frontend.
+     * Reutilizado em listData() e getDetail().
+     */
+    private function formatarDistribuidores($distribuidoresRelacionados): array
+    {
+        $distribuidores = [];
+        foreach ($distribuidoresRelacionados as $rel) {
+            $distribuidorObj = null;
+            if ($rel->distribuidor) {
+                $distribuidorObj = [
+                    'id'        => $rel->distribuidor->id,
+                    'nome'      => $rel->distribuidor->nome ?? null,
+                    'descricao' => $rel->distribuidor->descricao ?? null,
+                    'tipo'      => $rel->distribuidor->tipo ?? null,
+                    'estoque'   => isset($rel->distribuidor->estoque) ? (bool) $rel->distribuidor->estoque : null,
+                ];
+            }
+            $distribuidores[] = [
+                'id'                    => $rel->id,
+                'setor_distribuidor_id' => $rel->setor_distribuidor_id,
+                'created_at'            => $rel->created_at ? $rel->created_at->toDateTimeString() : null,
+                'updated_at'            => $rel->updated_at ? $rel->updated_at->toDateTimeString() : null,
+                'distribuidor'          => $distribuidorObj,
+            ];
+        }
+        return $distribuidores;
     }
     public function addDistribuidor(Request $request)
     {

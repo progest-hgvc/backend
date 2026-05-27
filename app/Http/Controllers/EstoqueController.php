@@ -23,14 +23,14 @@ class EstoqueController extends Controller
 
             if (!$setor) {
                 return response()->json([
-                    'success' => false,
+                    'status'  => false,
                     'message' => 'Setor não encontrado.'
                 ], 404);
             }
 
             if (!$setor->estoque) {
                 return response()->json([
-                    'success' => false,
+                    'status'  => false,
                     'message' => 'Este setor não possui controle de estoque.'
                 ], 200);
             }
@@ -47,7 +47,7 @@ class EstoqueController extends Controller
                     $query->select('id', 'nome');
                 }
             ])
-                ->where('unidade_id', $setorId)
+                ->where('setor_id', $setorId)
                 ->get()
                 ->map(function ($item) {
                     return [
@@ -81,27 +81,26 @@ class EstoqueController extends Controller
                 });
 
             return response()->json([
-                'success' => true,
-                'data' => [
-                    'setor' => [
-                        'id' => $setor->id,
+                'status' => true,
+                'data'   => [
+                    'setor'   => [
+                        'id'   => $setor->id,
                         'nome' => $setor->nome,
-                        // 'codigo_setor' removido (coluna não existe na migration)
                         'tipo' => $setor->tipo,
                     ],
                     'estoque' => $estoque,
-                    'resumo' => [
-                        'total_produtos' => $estoque->count(),
-                        'produtos_disponiveis' => $estoque->where('status_disponibilidade', 'D')->count(),
+                    'resumo'  => [
+                        'total_produtos'         => $estoque->count(),
+                        'produtos_disponiveis'   => $estoque->where('status_disponibilidade', 'D')->count(),
                         'produtos_abaixo_minimo' => $estoque->where('abaixo_minimo', true)->count(),
                     ]
                 ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'status'  => false,
                 'message' => 'Erro ao buscar estoque.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
@@ -123,31 +122,31 @@ class EstoqueController extends Controller
 
             if (!$estoque) {
                 return response()->json([
-                    'success' => false,
+                    'status'  => false,
                     'message' => 'Item de estoque não encontrado.'
                 ], 404);
             }
 
             return response()->json([
-                'success' => true,
-                'data' => [
-                    'id' => $estoque->id,
-                    'quantidade_atual' => $estoque->quantidade_atual,
-                    'quantidade_minima' => $estoque->quantidade_minima,
-                    'status_disponibilidade' => $estoque->status_disponibilidade,
-                    'status_disponibilidade_texto' => $estoque->status_disponibilidade === 'D' ? 'Disponível' : 'Indisponível',
-                    'abaixo_minimo' => $estoque->isAbaixoMinimo(),
-                    'produto' => $estoque->produto,
-                    'setor' => $estoque->setor,
-                    'created_at' => $estoque->created_at,
-                    'updated_at' => $estoque->updated_at,
+                'status' => true,
+                'data'   => [
+                    'id'                          => $estoque->id,
+                    'quantidade_atual'            => $estoque->quantidade_atual,
+                    'quantidade_minima'           => $estoque->quantidade_minima,
+                    'status_disponibilidade'      => $estoque->status_disponibilidade,
+                    'status_disponibilidade_texto'=> $estoque->status_disponibilidade === 'D' ? 'Disponível' : 'Indisponível',
+                    'abaixo_minimo'               => $estoque->isAbaixoMinimo(),
+                    'produto'                     => $estoque->produto,
+                    'setor'                       => $estoque->setor,
+                    'created_at'                  => $estoque->created_at,
+                    'updated_at'                  => $estoque->updated_at,
                 ]
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'status'  => false,
                 'message' => 'Erro ao buscar item do estoque.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
@@ -170,7 +169,7 @@ class EstoqueController extends Controller
 
             if (!$estoque) {
                 return response()->json([
-                    'success' => false,
+                    'status'  => false,
                     'message' => 'Item de estoque não encontrado.'
                 ], 404);
             }
@@ -180,15 +179,15 @@ class EstoqueController extends Controller
             ]);
 
             return response()->json([
-                'success' => true,
+                'status'  => true,
                 'message' => 'Quantidade mínima atualizada com sucesso.',
-                'data' => $estoque
+                'data'    => $estoque
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'status'  => false,
                 'message' => 'Erro ao atualizar quantidade mínima.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }
@@ -211,7 +210,7 @@ class EstoqueController extends Controller
 
             if (!$estoque) {
                 return response()->json([
-                    'success' => false,
+                    'status'  => false,
                     'message' => 'Item de estoque não encontrado.'
                 ], 404);
             }
@@ -221,15 +220,15 @@ class EstoqueController extends Controller
             ]);
 
             return response()->json([
-                'success' => true,
+                'status'  => true,
                 'message' => 'Status atualizado com sucesso.',
-                'data' => $estoque
+                'data'    => $estoque
             ]);
         } catch (\Exception $e) {
             return response()->json([
-                'success' => false,
+                'status'  => false,
                 'message' => 'Erro ao atualizar status.',
-                'error' => $e->getMessage()
+                'error'   => $e->getMessage()
             ], 500);
         }
     }

@@ -13,39 +13,40 @@ use App\Http\Requests\UsuarioSetorRequest;
 class UsuarioSetorController extends Controller
 {
     /**
-     * Vincular usuário a um setor com perfil
+     * Vincular usuário a um setor com perfil.
+     * Equivalente ao padrão `add` dos demais controllers.
      */
-    public function create(UsuarioSetorRequest $request)
+    public function add(UsuarioSetorRequest $request)
     {
         try {
-            $data = $request->validated();
-            
-            if (empty($data['perfil'])) {
+            $dados = $request->validated();
+
+            if (empty($dados['perfil'])) {
                 return response()->json(['status' => false, 'message' => 'O perfil é obrigatório para criar um vínculo.'], 400);
             }
 
-            $usuarioId = $data['usuario_id'];
-            $setorId = $data['setor_id'];
-            $perfil = $data['perfil'];
+            $usuarioId = $dados['usuario_id'];
+            $setorId   = $dados['setor_id'];
+            $perfil    = $dados['perfil'];
 
             // Verificar permissão: somente admin do setor pode criar vínculo
-            /** @var User $user */
-            $user = Auth::user();
-            $isAdmin = $user->isSuperAdmin() || $user->setores()->where('setores.id', $setorId)->wherePivot('perfil', 'admin')->exists();
+            /** @var User $usuario */
+            $usuario = Auth::user();
+            $isAdmin = $usuario->isSuperAdmin() || $usuario->setores()->where('setores.id', $setorId)->wherePivot('perfil', 'admin')->exists();
             if (!$isAdmin) {
                 return response()->json(['status' => false, 'message' => 'Ação permitida apenas para administradores deste setor.'], 403);
             }
 
-            // Checar duplicidade (Para o Interceptor apanhar visualmente)
-            $exists = DB::table('usuario_setor')->where('usuario_id', $usuarioId)->where('setor_id', $setorId)->exists();
-            if ($exists) {
-                return response()->json(['status' => false, 'message' => 'Este usuário já está vinculado a este setor.'], 422); 
+            // Checar duplicidade
+            $existe = DB::table('usuario_setor')->where('usuario_id', $usuarioId)->where('setor_id', $setorId)->exists();
+            if ($existe) {
+                return response()->json(['status' => false, 'message' => 'Este usuário já está vinculado a este setor.'], 422);
             }
 
             $id = DB::table('usuario_setor')->insertGetId([
                 'usuario_id' => $usuarioId,
-                'setor_id' => $setorId,
-                'perfil' => $perfil,
+                'setor_id'   => $setorId,
+                'perfil'     => $perfil,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -58,35 +59,35 @@ class UsuarioSetorController extends Controller
     }
 
     /**
-     * Atualizar perfil do vínculo
+     * Atualizar perfil do vínculo usuário-setor.
      */
     public function update(UsuarioSetorRequest $request)
     {
         try {
-            $data = $request->validated();
+            $dados = $request->validated();
 
-            if (empty($data['perfil'])) {
+            if (empty($dados['perfil'])) {
                 return response()->json(['status' => false, 'message' => 'O perfil é obrigatório para atualizar.'], 400);
             }
 
-            $usuarioId = $data['usuario_id'];
-            $setorId = $data['setor_id'];
-            $perfil = $data['perfil'];
+            $usuarioId = $dados['usuario_id'];
+            $setorId   = $dados['setor_id'];
+            $perfil    = $dados['perfil'];
 
-            /** @var User $user */
-            $user = Auth::user();
-            $isAdmin = $user->isSuperAdmin() || $user->setores()->where('setores.id', $setorId)->wherePivot('perfil', 'admin')->exists();
+            /** @var User $usuario */
+            $usuario = Auth::user();
+            $isAdmin = $usuario->isSuperAdmin() || $usuario->setores()->where('setores.id', $setorId)->wherePivot('perfil', 'admin')->exists();
             if (!$isAdmin) {
                 return response()->json(['status' => false, 'message' => 'Ação permitida apenas para administradores deste setor.'], 403);
             }
 
-            $row = DB::table('usuario_setor')->where('usuario_id', $usuarioId)->where('setor_id', $setorId)->first();
-            if (!$row) {
+            $registro = DB::table('usuario_setor')->where('usuario_id', $usuarioId)->where('setor_id', $setorId)->first();
+            if (!$registro) {
                 return response()->json(['status' => false, 'message' => 'Vínculo não encontrado.'], 404);
             }
 
-            DB::table('usuario_setor')->where('id', $row->id)->update(['perfil' => $perfil, 'updated_at' => now()]);
-            
+            DB::table('usuario_setor')->where('id', $registro->id)->update(['perfil' => $perfil, 'updated_at' => now()]);
+
             return response()->json(['status' => true, 'data' => ['usuario_id' => $usuarioId, 'setor_id' => $setorId, 'perfil' => $perfil]]);
         } catch (\Throwable $e) {
             Log::error('Erro ao atualizar vinculo usuario_setor: ' . $e->getMessage());
@@ -95,29 +96,29 @@ class UsuarioSetorController extends Controller
     }
 
     /**
-     * Deletar vínculo
+     * Deletar vínculo usuário-setor.
      */
     public function delete(UsuarioSetorRequest $request)
     {
         try {
-            $data = $request->validated();
-            
-            $usuarioId = $data['usuario_id'];
-            $setorId = $data['setor_id'];
+            $dados = $request->validated();
 
-            /** @var User $user */
-            $user = Auth::user();
-            $isAdmin = $user->isSuperAdmin() || $user->setores()->where('setores.id', $setorId)->wherePivot('perfil', 'admin')->exists();
+            $usuarioId = $dados['usuario_id'];
+            $setorId   = $dados['setor_id'];
+
+            /** @var User $usuario */
+            $usuario = Auth::user();
+            $isAdmin = $usuario->isSuperAdmin() || $usuario->setores()->where('setores.id', $setorId)->wherePivot('perfil', 'admin')->exists();
             if (!$isAdmin) {
                 return response()->json(['status' => false, 'message' => 'Ação permitida apenas para administradores deste setor.'], 403);
             }
 
-            $deleted = DB::table('usuario_setor')->where('usuario_id', $usuarioId)->where('setor_id', $setorId)->delete();
-            
-            if ($deleted) {
+            $removidos = DB::table('usuario_setor')->where('usuario_id', $usuarioId)->where('setor_id', $setorId)->delete();
+
+            if ($removidos) {
                 return response()->json(['status' => true, 'message' => 'Vínculo removido com sucesso.']);
             }
-            
+
             return response()->json(['status' => false, 'message' => 'Vínculo não encontrado.'], 404);
         } catch (\Throwable $e) {
             Log::error('Erro ao deletar vinculo usuario_setor: ' . $e->getMessage());
@@ -126,24 +127,24 @@ class UsuarioSetorController extends Controller
     }
 
     /**
-     * Listar usuários vinculados a um setor
+     * Listar usuários vinculados a um setor.
      */
-    public function listBySetor(Request $request)
+    public function listarPorSetor(Request $request)
     {
         try {
             $setorId = $request->input('setor_id');
-            
+
             if (!$setorId) {
                 return response()->json(['status' => false, 'message' => 'ID do setor é obrigatório.'], 400);
             }
 
-            $rows = DB::table('usuario_setor')
+            $registros = DB::table('usuario_setor')
                 ->join('users', 'usuario_setor.usuario_id', '=', 'users.id')
                 ->where('usuario_setor.setor_id', $setorId)
                 ->select('users.id', 'users.name', 'users.email', 'usuario_setor.perfil')
                 ->get();
 
-            return response()->json(['status' => true, 'data' => $rows]);
+            return response()->json(['status' => true, 'data' => $registros]);
         } catch (\Throwable $e) {
             Log::error('Erro ao listar usuarios por setor: ' . $e->getMessage());
             return response()->json(['status' => false, 'message' => 'Erro interno ao carregar a lista.'], 500);
@@ -151,9 +152,9 @@ class UsuarioSetorController extends Controller
     }
 
     /**
-     * Listar setores vinculados a um usuário (com polo eager loading)
+     * Listar setores vinculados a um usuário (com polo em eager loading).
      */
-    public function listByUsuario(Request $request)
+    public function listarPorUsuario(Request $request)
     {
         try {
             $usuarioId = $request->input('usuario_id');
@@ -162,7 +163,7 @@ class UsuarioSetorController extends Controller
                 return response()->json(['status' => false, 'message' => 'ID do usuário é obrigatório.'], 400);
             }
 
-            $rows = DB::table('usuario_setor')
+            $registros = DB::table('usuario_setor')
                 ->where('usuario_setor.usuario_id', $usuarioId)
                 ->join('setores', 'usuario_setor.setor_id', '=', 'setores.id')
                 ->leftJoin('polos', 'setores.polo_id', '=', 'polos.id')
@@ -190,10 +191,10 @@ class UsuarioSetorController extends Controller
                     ];
                 });
 
-            return response()->json(['status' => true, 'data' => $rows]);
+            return response()->json(['status' => true, 'data' => $registros]);
         } catch (\Throwable $e) {
             Log::error('Erro ao listar setores por usuario: ' . $e->getMessage());
             return response()->json(['status' => false, 'message' => 'Erro interno ao carregar a lista.'], 500);
         }
     }
-}
+}

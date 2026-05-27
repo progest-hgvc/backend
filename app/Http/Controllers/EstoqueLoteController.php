@@ -28,7 +28,7 @@ class EstoqueLoteController extends Controller
                 ], 422);
             }
 
-            // Buscar o estoque para pegar produto_id e unidade_id
+            // Buscar o estoque para pegar produto_id e setor_id
             $estoque = Estoque::find($request->estoque_id);
 
             $lotes = EstoqueLote::with([
@@ -40,7 +40,7 @@ class EstoqueLoteController extends Controller
                 'produto.unidadeMedida:id,nome',
             ])
                 ->where('produto_id', $estoque->produto_id)
-                ->where('unidade_id', $estoque->unidade_id)
+                ->where('setor_id', $estoque->setor_id)
                 ->orderBy('data_vencimento', 'asc')
                 ->get();
 
@@ -89,7 +89,7 @@ class EstoqueLoteController extends Controller
 
             // Atualiza a quantidade geral do estoque
             $estoque = Estoque::where('produto_id', $lote->produto_id)
-                ->where('unidade_id', $lote->unidade_id)
+                ->where('setor_id', $lote->setor_id)
                 ->first();
 
             if ($estoque) {
@@ -103,7 +103,7 @@ class EstoqueLoteController extends Controller
                 $estoque->save();
             }
 
-            $lote->load(['unidade', 'produto.grupoProduto', 'produto.unidadeMedida']);
+            $lote->load(['setor', 'produto.grupoProduto', 'produto.unidadeMedida']);
 
             return response()->json([
                 'status' => true,

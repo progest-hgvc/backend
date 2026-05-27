@@ -21,7 +21,7 @@ class EstoqueController
 
         $validator = Validator::make($data['estoque'], [
             'produto_id'       => 'required|string|max:50|unique:estoque,produto_id',
-            'unidade_id'         => 'required|string|max:20|unique:estoque,unidade_id',
+            'setor_id'         => 'required|string|max:20|unique:estoque,setor_id',
             'quantidade' => 'required|string|max:255',
         ]);
 
@@ -35,7 +35,7 @@ class EstoqueController
 
         $estoque = new Estoque;
         $estoque->produto_id = $data['estoque']['produto_id'];
-        $estoque->unidade_id = $data['estoque']['unidade_id'];
+        $estoque->setor_id = $data['estoque']['setor_id'];
         // CORREÇÃO: O banco espera 'quantidade_atual', mas o front envia 'quantidade'
         $estoque->quantidade_atual = $data['estoque']['quantidade'];
         $estoque->quantidade_minima = $data['estoque']['quantidade_minima'] ?? 0;
@@ -58,12 +58,12 @@ class EstoqueController
             }
         }
 
-        $fornecedores = $query
-            ->select('id', 'produto_id', 'unidade_id', 'quantidade', 'status')
+        $registros = $query
+            ->select('id', 'produto_id', 'setor_id', 'quantidade', 'status')
             ->orderBy('produto_id')
             ->get();
 
-        return ['status' => true, 'data' => $fornecedores];
+        return ['status' => true, 'data' => $registros];
     }
 
     public function listData(Request $request)
@@ -96,7 +96,7 @@ class EstoqueController
 
         $validator = Validator::make($data['fornecedor'], [
             'produto_id'       => 'required|string|max:50|unique:estoque,produto_id,' . $id,
-            'unidade_id'         => 'required|string|max:20|unique:estoque,unidade_id,' . $id,
+            'setor_id'         => 'required|string|max:20|unique:estoque,setor_id,' . $id,
             'quantidade' => 'required|string|max:255',
         ]);
 
@@ -109,7 +109,7 @@ class EstoqueController
         }
 
         $estoque->produto_id        = mb_strtoupper($data['estoque']['produto_id']);
-        $estoque->unidade_id          = mb_strtoupper($data['estoque']['unidade_id']);
+        $estoque->setor_id          = mb_strtoupper($data['estoque']['setor_id']);
         $estoque->quantidade  = mb_strtoupper($data['estoque']['quantidade']);
         $estoque->status        = $data['estoque']['status'] ?? 'A';
         $estoque->save();

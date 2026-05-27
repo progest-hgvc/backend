@@ -189,7 +189,7 @@ class MovimentacaoController extends Controller
                     // Se outro processo tentar aprovar no mesmo milissegundo, ele será forçado 
                     // a esperar esta transação terminar antes de conseguir ler o stock.
                     $estoqueOrigem = Estoque::where('produto_id', $item->produto_id)
-                        ->where('unidade_id', $mov->setor_origem_id)
+                        ->where('setor_id', $mov->setor_origem_id)
                         ->lockForUpdate() 
                         ->first();
  
@@ -232,7 +232,7 @@ class MovimentacaoController extends Controller
 
                     // 1. DEDUZIR do estoque de ORIGEM
                     $estoqueOrigem = Estoque::where('produto_id', $item->produto_id)
-                        ->where('unidade_id', $mov->setor_origem_id)
+                        ->where('setor_id', $mov->setor_origem_id)
                         ->lockForUpdate()
                         ->first();
 
@@ -259,7 +259,7 @@ class MovimentacaoController extends Controller
 
                     // 2. INCREMENTAR o estoque de DESTINO
                     $estoqueDestino = Estoque::where('produto_id', $item->produto_id)
-                        ->where('unidade_id', $mov->setor_destino_id)
+                        ->where('setor_id', $mov->setor_destino_id)
                         ->lockForUpdate()
                         ->first();
 
@@ -272,7 +272,7 @@ class MovimentacaoController extends Controller
 
                         $estoqueDestino = Estoque::create([
                             'produto_id' => $item->produto_id,
-                            'unidade_id' => $mov->setor_destino_id,
+                            'setor_id' => $mov->setor_destino_id,
                             'quantidade_atual' => $qtdLiberar,
                             'quantidade_minima' => 0,
                             'status_disponibilidade' => 'D'
@@ -397,7 +397,7 @@ class MovimentacaoController extends Controller
             $restante      = $qtdNecessaria;
 
             $lotes = EstoqueLote::where('produto_id', $item->produto_id)
-                ->where('unidade_id', $mov->setor_origem_id)
+                ->where('setor_id', $mov->setor_origem_id)
                 ->where('quantidade_disponivel', '>', 0)
                 ->orderBy('data_vencimento', 'asc') // FIFO: mais antigo primeiro
                 ->get();
@@ -437,7 +437,7 @@ class MovimentacaoController extends Controller
         $restante = $qtdLiberar;
 
         $lotes = EstoqueLote::where('produto_id', $produtoId)
-            ->where('unidade_id', $setorOrigemId)
+            ->where('setor_id', $setorOrigemId)
             ->where('quantidade_disponivel', '>', 0)
             ->orderBy('data_vencimento', 'asc') // FIFO
             ->lockForUpdate()
@@ -464,7 +464,7 @@ class MovimentacaoController extends Controller
             if ($setorDestinoId) {
                 $loteDestino = EstoqueLote::firstOrCreate(
                     [
-                        'unidade_id' => $setorDestinoId,
+                        'setor_id' => $setorDestinoId,
                         'produto_id' => $produtoId,
                         'lote'       => $lote->lote,
                     ],
