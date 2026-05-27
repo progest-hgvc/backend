@@ -203,10 +203,10 @@ class DadosFakeRelatoriosSeeder extends Seeder
 
         foreach ($setores as $setorData) {
             $unidade = $this->unidades[array_rand($this->unidades)];
-            $setorData['unidade_id'] = $unidade->id;
+            $setorData['polo_id'] = $unidade->id;
             
             $this->setores[] = Setores::firstOrCreate(
-                ['nome' => $setorData['nome'], 'unidade_id' => $unidade->id],
+                ['nome' => $setorData['nome'], 'polo_id' => $unidade->id],
                 $setorData
             );
         }
@@ -393,7 +393,7 @@ class DadosFakeRelatoriosSeeder extends Seeder
 
                 Estoque::firstOrCreate(
                     [
-                        'unidade_id' => $setor->id,
+                        'setor_id' => $setor->id,
                         'produto_id' => $produto->id,
                     ],
                     [
@@ -452,7 +452,7 @@ class DadosFakeRelatoriosSeeder extends Seeder
                 ]);
 
                 // Atualizar estoque
-                $estoque = Estoque::where('unidade_id', $setor->id)
+                $estoque = Estoque::where('setor_id', $setor->id)
                     ->where('produto_id', $produto->id)
                     ->first();
                     
@@ -486,7 +486,7 @@ class DadosFakeRelatoriosSeeder extends Seeder
                 
                 EstoqueLote::firstOrCreate(
                     [
-                        'unidade_id' => $estoque->unidade_id,
+                        'setor_id' => $estoque->setor_id,
                         'produto_id' => $estoque->produto_id,
                         'lote' => 'L' . date('Y') . '-' . str_pad(rand(1, 999), 3, '0', STR_PAD_LEFT),
                     ],

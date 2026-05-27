@@ -17,58 +17,132 @@ class SetoresSeeder extends Seeder
     {
         $now = Carbon::now();
 
-        // Buscar ID da unidade HGVC (Todos os setores serão desta unidade)
-        $poloHGVC = DB::table('unidades')->where('nome', 'Hospital Geral')->first();
-        if (!$poloHGVC) {
-            return; // Unidade não existe ainda
+        // =====================================================================
+        // Buscar IDs dos polos (tabela 'unidades' renomeada para 'polos')
+        // =====================================================================
+        $hgvc = DB::table('polos')->where('nome', 'Hospital Geral')->first();
+        $hap  = DB::table('polos')->where('nome', 'Hospital Afrânio Peixoto')->first();
+        $hcs  = DB::table('polos')->where('nome', 'Hospital Crescêncio Silveira')->first();
+        $upa  = DB::table('polos')->where('nome', 'UPA')->first();
+
+        if (!$hgvc || !$hap || !$hcs || !$upa) {
+            $this->command->error('Polos não encontrados. Execute UnidadesSeeder primeiro.');
+            return;
         }
 
-        // Inserir somente os 6 setores da imagem (todos no HGVC)
-        $toInsert = [
-            ['unidade_id' => $poloHGVC->id, 'nome' => 'Farmácia Central', 'descricao' => 'Farmácia Central que atende as clínicas', 'tipo' => 'Medicamento', 'estoque' => true, 'status' => 'A'],
-            ['unidade_id' => $poloHGVC->id, 'nome' => 'Farmácia de Dispensação', 'descricao' => 'Central de Abastecimento Farmacêutico', 'tipo' => 'Medicamento', 'estoque' => true, 'status' => 'A'],
-            ['unidade_id' => $poloHGVC->id, 'nome' => 'Satélite da Emergência', 'descricao' => 'Farmácia Satélite do Setor de Emergência', 'tipo' => 'Medicamento', 'estoque' => true, 'status' => 'A'],
-            ['unidade_id' => $poloHGVC->id, 'nome' => 'Centro Cirúrgico', 'descricao' => 'Centro Cirúrgico', 'tipo' => 'Medicamento', 'estoque' => false, 'status' => 'A'],
-            ['unidade_id' => $poloHGVC->id, 'nome' => 'Clínica Médica', 'descricao' => 'Clínica Médica', 'tipo' => 'Medicamento', 'estoque' => false, 'status' => 'A'],
-            ['unidade_id' => $poloHGVC->id, 'nome' => 'Emergência', 'descricao' => 'Setor de Emergência', 'tipo' => 'Medicamento', 'estoque' => false, 'status' => 'A'],
+        // =====================================================================
+        // Setores — coluna polo_id (era unidade_id)
+        // =====================================================================
+        $setores = [
+            // HGVC — com estoque
+            ['polo_id' => $hgvc->id, 'nome' => 'FARMÁCIA CENTRAL',        'estoque' => true,  'status' => 'A', 'tipo' => 'Medicamento'],
+            ['polo_id' => $hgvc->id, 'nome' => 'FARMÁCIA DE DISPENSAÇÃO', 'estoque' => true,  'status' => 'A', 'tipo' => 'Medicamento'],
+            ['polo_id' => $hgvc->id, 'nome' => 'SATÉLITE DA EMERGÊNCIA',  'estoque' => true,  'status' => 'A', 'tipo' => 'Medicamento'],
+            // HGVC — sem estoque
+            ['polo_id' => $hgvc->id, 'nome' => 'CENTRO CIRÚRGICO',        'estoque' => false, 'status' => 'A', 'tipo' => 'Medicamento'],
+            ['polo_id' => $hgvc->id, 'nome' => 'CLÍNICA MÉDICA',          'estoque' => false, 'status' => 'A', 'tipo' => 'Medicamento'],
+            ['polo_id' => $hgvc->id, 'nome' => 'EMERGÊNCIA',              'estoque' => false, 'status' => 'A', 'tipo' => 'Medicamento'],
+
+            // HAP — com estoque
+            ['polo_id' => $hap->id,  'nome' => 'ALMOXARIFADO',            'estoque' => true,  'status' => 'A', 'tipo' => 'Medicamento'],
+            ['polo_id' => $hap->id,  'nome' => 'UTI',                     'estoque' => true,  'status' => 'A', 'tipo' => 'Medicamento'],
+            // HAP — sem estoque
+            ['polo_id' => $hap->id,  'nome' => 'SETOR DE INTERNAÇÃO',     'estoque' => false, 'status' => 'A', 'tipo' => 'Medicamento'],
+
+            // HCS — com estoque
+            ['polo_id' => $hcs->id,  'nome' => 'ALMOXARIFADO',            'estoque' => true,  'status' => 'A', 'tipo' => 'Medicamento'],
+            // HCS — sem estoque
+            ['polo_id' => $hcs->id,  'nome' => 'CLÍNICA MÉDICA',          'estoque' => false, 'status' => 'A', 'tipo' => 'Medicamento'],
+            ['polo_id' => $hcs->id,  'nome' => 'CLÍNICA CIRÚRGICA',       'estoque' => false, 'status' => 'A', 'tipo' => 'Medicamento'],
+
+            // UPA — com estoque
+            ['polo_id' => $upa->id,  'nome' => 'ALMOXARIFADO',            'estoque' => true,  'status' => 'A', 'tipo' => 'Medicamento'],
+            // UPA — sem estoque
+            ['polo_id' => $upa->id,  'nome' => 'ÁREA DE ATENDIMENTO',     'estoque' => false, 'status' => 'A', 'tipo' => 'Medicamento'],
+            ['polo_id' => $upa->id,  'nome' => 'POSTO DE ENFERMAGEM',     'estoque' => false, 'status' => 'A', 'tipo' => 'Medicamento'],
         ];
 
-        foreach ($toInsert as $row) {
+        foreach ($setores as $setor) {
             DB::table('setores')->updateOrInsert(
-                ['nome' => mb_strtoupper($row['nome'])],
+                // Chave composta: polo_id + nome (evita duplicatas entre unidades diferentes)
+                ['polo_id' => $setor['polo_id'], 'nome' => $setor['nome']],
                 [
-                    'unidade_id' => $row['unidade_id'],
-                    'descricao' => $row['descricao'],
-                    'tipo' => $row['tipo'],
-                    'estoque' => $row['estoque'],
-                    'status' => $row['status'],
+                    'descricao'  => null,
+                    'tipo'       => $setor['tipo'],
+                    'estoque'    => $setor['estoque'],
+                    'status'     => $setor['status'],
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]
             );
         }
 
-        // Recuperar IDs para criar relações de fornecedor
-        $farmaciaCentral = DB::table('setores')->where('nome', mb_strtoupper('Farmácia Central'))->first();
-        $farmDisp = DB::table('setores')->where('nome', mb_strtoupper('Farmácia de Dispensação'))->first();
-        $satEmerg = DB::table('setores')->where('nome', mb_strtoupper('Satélite da Emergência'))->first();
-        $centroCirc = DB::table('setores')->where('nome', mb_strtoupper('Centro Cirúrgico'))->first();
-        $clinicaMed = DB::table('setores')->where('nome', mb_strtoupper('Clínica Médica'))->first();
-        $emergencia = DB::table('setores')->where('nome', mb_strtoupper('Emergência'))->first();
+        // =====================================================================
+        // Relações de distribuição: setor_distribuidor
+        // (tabela 'setor_fornecedor' renomeada para 'setor_distribuidor',
+        //  coluna 'setor_fornecedor_id' renomeada para 'setor_distribuidor_id')
+        // =====================================================================
 
-        // Criar relações: todos apontam para Farmácia Central como fornecedor
-        $relations = [];
-        if ($farmDisp) $relations[] = ['setor_solicitante_id' => $farmDisp->id, 'setor_fornecedor_id' => $farmaciaCentral->id];
-        if ($satEmerg) $relations[] = ['setor_solicitante_id' => $satEmerg->id, 'setor_fornecedor_id' => $farmaciaCentral->id];
-        if ($centroCirc) $relations[] = ['setor_solicitante_id' => $centroCirc->id, 'setor_fornecedor_id' => $farmaciaCentral->id];
-        if ($clinicaMed) $relations[] = ['setor_solicitante_id' => $clinicaMed->id, 'setor_fornecedor_id' => $farmaciaCentral->id];
-        if ($emergencia) $relations[] = ['setor_solicitante_id' => $emergencia->id, 'setor_fornecedor_id' => $farmaciaCentral->id];
+        // Helper para buscar setor pelo nome e polo_id
+        $setor = fn($nome, $poloId) => DB::table('setores')
+            ->where('nome', $nome)
+            ->where('polo_id', $poloId)
+            ->first();
 
-        foreach ($relations as $r) {
-            DB::table('setor_fornecedor')->updateOrInsert(
+        // Referências reutilizadas
+        $farmaciaCentral = $setor('FARMÁCIA CENTRAL',        $hgvc->id);
+        $farmDisp        = $setor('FARMÁCIA DE DISPENSAÇÃO', $hgvc->id);
+        $satEmerg        = $setor('SATÉLITE DA EMERGÊNCIA',  $hgvc->id);
+        $centroCirc      = $setor('CENTRO CIRÚRGICO',        $hgvc->id);
+        $clinicaMedHGVC  = $setor('CLÍNICA MÉDICA',          $hgvc->id);
+        $emergencia      = $setor('EMERGÊNCIA',              $hgvc->id);
+
+        $almoxHAP        = $setor('ALMOXARIFADO',            $hap->id);
+        $utiHAP          = $setor('UTI',                     $hap->id);
+        $internacaoHAP   = $setor('SETOR DE INTERNAÇÃO',     $hap->id);
+
+        $almoxHCS        = $setor('ALMOXARIFADO',            $hcs->id);
+        $clinicaMedHCS   = $setor('CLÍNICA MÉDICA',          $hcs->id);
+        $clinicaCirHCS   = $setor('CLÍNICA CIRÚRGICA',       $hcs->id);
+
+        $almoxUPA        = $setor('ALMOXARIFADO',            $upa->id);
+        $atendimentoUPA  = $setor('ÁREA DE ATENDIMENTO',     $upa->id);
+        $postoUPA        = $setor('POSTO DE ENFERMAGEM',     $upa->id);
+
+        // Mapa de relações: [setor_solicitante, setor_distribuidor]
+        $relacoes = [
+            // HGVC
+            [$farmDisp,       $farmaciaCentral],   // Farmácia de Dispensação -> Farmácia Central
+            [$satEmerg,       $farmaciaCentral],   // Satélite da Emergência  -> Farmácia Central
+            [$centroCirc,     $farmDisp],           // Centro Cirúrgico        -> Farmácia de Dispensação
+            [$clinicaMedHGVC, $farmDisp],           // Clínica Médica (HGVC)   -> Farmácia de Dispensação
+            [$emergencia,     $satEmerg],           // Emergência              -> Satélite da Emergência
+
+            // HAP
+            [$almoxHAP,       $farmaciaCentral],   // Almoxarifado (HAP) -> Farmácia Central (HGVC)
+            [$utiHAP,         $almoxHAP],           // UTI                -> Almoxarifado (HAP)
+            [$internacaoHAP,  $almoxHAP],           // Setor de Internação -> Almoxarifado (HAP)
+
+            // HCS
+            [$almoxHCS,       $farmaciaCentral],   // Almoxarifado (HCS) -> Farmácia Central (HGVC)
+            [$clinicaMedHCS,  $almoxHCS],           // Clínica Médica     -> Almoxarifado (HCS)
+            [$clinicaCirHCS,  $almoxHCS],           // Clínica Cirúrgica  -> Almoxarifado (HCS)
+
+            // UPA
+            [$almoxUPA,       $farmaciaCentral],   // Almoxarifado (UPA) -> Farmácia Central (HGVC)
+            [$atendimentoUPA, $almoxUPA],           // Área de Atendimento -> Almoxarifado (UPA)
+            [$postoUPA,       $almoxUPA],           // Posto de Enfermagem -> Almoxarifado (UPA)
+        ];
+
+        foreach ($relacoes as [$solicitante, $distribuidor]) {
+            if (!$solicitante || !$distribuidor) {
+                continue; // Pula se algum setor não foi encontrado
+            }
+
+            DB::table('setor_distribuidor')->updateOrInsert(
                 [
-                    'setor_solicitante_id' => $r['setor_solicitante_id'],
-                    'setor_fornecedor_id' => $r['setor_fornecedor_id'],
+                    'setor_solicitante_id'  => $solicitante->id,
+                    'setor_distribuidor_id' => $distribuidor->id,
                 ],
                 [
                     'created_at' => $now,

@@ -15,22 +15,23 @@ class UnidadesSeeder extends Seeder
      */
     public function run()
     {
-        // Usar updateOrInsert para evitar erros de foreign key constraint
-
-        $unidades = [
-            ['nome' => 'Hospital Geral', 'status' => 'A'],
-            ['nome' => 'Hospital Afrânio Peixoto', 'status' => 'A'],
-            ['nome' => 'Crescêncio Silveira', 'status' => 'A'],
-            ['nome' => 'UPA', 'status' => 'A'],
-        ];
-
         $now = Carbon::now();
 
-        foreach ($unidades as $unidade) {
-            DB::table('unidades')->updateOrInsert(
-                ['nome' => $unidade['nome']],
+        // A tabela 'unidades' foi renomeada para 'polos' (migration 2026_05_25)
+        // O campo 'sigla' foi adicionado (migration 2026_05_26)
+        $polos = [
+            ['nome' => 'Hospital Geral',            'sigla' => 'HGVC', 'status' => 'A'],
+            ['nome' => 'Hospital Afrânio Peixoto',  'sigla' => 'HAP',  'status' => 'A'],
+            ['nome' => 'Hospital Crescêncio Silveira', 'sigla' => 'HCS', 'status' => 'A'],
+            ['nome' => 'UPA',                        'sigla' => 'UPA',  'status' => 'A'],
+        ];
+
+        foreach ($polos as $polo) {
+            DB::table('polos')->updateOrInsert(
+                ['nome' => $polo['nome']],
                 [
-                    'status' => $unidade['status'],
+                    'sigla'      => $polo['sigla'],
+                    'status'     => $polo['status'],
                     'created_at' => $now,
                     'updated_at' => $now,
                 ]
