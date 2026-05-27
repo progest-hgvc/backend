@@ -52,6 +52,7 @@ Route::group(['middleware' => 'auth:sanctum'], function () {
     Route::post('/usuarioSetor/update', [UsuarioSetorController::class, 'update']);
     Route::post('/usuarioSetor/delete', [UsuarioSetorController::class, 'delete']);
     Route::post('/usuarioSetor/listBySetor', [UsuarioSetorController::class, 'listBySetor']);
+    Route::post('/usuarioSetor/listByUsuario', [UsuarioSetorController::class, 'listByUsuario']);
 });
 
 
