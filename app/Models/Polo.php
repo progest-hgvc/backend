@@ -13,12 +13,14 @@ class Polo extends Model
 
     protected $fillable = [
         'nome',
+        'sigla',
         'status'
     ];
 
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'sigla'      => 'string',
     ];
 
     // Relacionamentos
