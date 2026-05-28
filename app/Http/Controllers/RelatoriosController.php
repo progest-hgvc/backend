@@ -54,7 +54,7 @@ class RelatoriosController extends Controller
                 'fornecedor:id,razao_social_nome,cnpj',
                 'setor:id,nome,tipo,polo_id',
                 'setor.polo:id,nome',
-                'itens.produto:id,nome,codigo_simpras,codigo_barras,grupo_produto_id,unidade_medida_id',
+                'itens.produto:id,nome,codigo_simpas,codigo_barras,grupo_produto_id,unidade_medida_id',
                 'itens.produto.unidadeMedida:id,nome',
                 'itens.produto.grupoProduto:id,nome,tipo'
             ]);
@@ -171,7 +171,7 @@ class RelatoriosController extends Controller
                 'setorDestino.polo:id,nome',
                 'usuario:id,name,email',
                 'aprovador:id,name,email',
-                'itens.produto:id,nome,codigo_simpras,codigo_barras,grupo_produto_id,unidade_medida_id',
+                'itens.produto:id,nome,codigo_simpas,codigo_barras,grupo_produto_id,unidade_medida_id',
                 'itens.produto.unidadeMedida:id,nome',
                 'itens.produto.grupoProduto:id,nome,tipo'
             ]);
@@ -330,7 +330,7 @@ class RelatoriosController extends Controller
                 'setorDestino.polo:id,nome',
                 'usuario:id,name,email',
                 'aprovador:id,name,email',
-                'itens.produto:id,nome,codigo_simpras,codigo_barras,grupo_produto_id,unidade_medida_id',
+                'itens.produto:id,nome,codigo_simpas,codigo_barras,grupo_produto_id,unidade_medida_id',
                 'itens.produto.unidadeMedida:id,nome',
                 'itens.produto.grupoProduto:id,nome,tipo'
             ])->where('tipo', 'S');
@@ -504,7 +504,7 @@ class RelatoriosController extends Controller
                     DB::raw('DATE(m.data_hora) as data'),
                     'p.id as produto_id',
                     'p.nome as produto_nome',
-                    'p.codigo_simpras',
+                    'p.codigo_simpas',
                     'p.codigo_barras',
                     'um.nome as unidade_medida',
                     'gp.nome as grupo_produto',
@@ -555,7 +555,7 @@ class RelatoriosController extends Controller
                 DB::raw('DATE(m.data_hora)'),
                 'p.id',
                 'p.nome',
-                'p.codigo_simpras',
+                'p.codigo_simpas',
                 'p.codigo_barras',
                 'um.nome',
                 'gp.nome',
@@ -608,7 +608,7 @@ class RelatoriosController extends Controller
                     'produto' => [
                         'id' => $item->produto_id,
                         'nome' => $item->produto_nome,
-                        'codigo_simpras' => $item->codigo_simpras,
+                        'codigo_simpas' => $item->codigo_simpas,
                         'codigo_barras' => $item->codigo_barras,
                         'unidade_medida' => $item->unidade_medida,
                         'grupo_produto' => $item->grupo_produto,
@@ -732,7 +732,7 @@ class RelatoriosController extends Controller
                     DB::raw('DATE(e.created_at) as data'),
                     'p.id as produto_id',
                     'p.nome as produto_nome',
-                    'p.codigo_simpras',
+                    'p.codigo_simpas',
                     'p.codigo_barras',
                     'um.nome as unidade_medida',
                     'gp.nome as grupo_produto',
@@ -772,7 +772,7 @@ class RelatoriosController extends Controller
                 DB::raw('DATE(e.created_at)'),
                 'p.id',
                 'p.nome',
-                'p.codigo_simpras',
+                'p.codigo_simpas',
                 'p.codigo_barras',
                 'um.nome',
                 'gp.nome',
@@ -827,7 +827,7 @@ class RelatoriosController extends Controller
                     'produto' => [
                         'id' => $item->produto_id,
                         'nome' => $item->produto_nome,
-                        'codigo_simpras' => $item->codigo_simpras,
+                        'codigo_simpas' => $item->codigo_simpas,
                         'codigo_barras' => $item->codigo_barras,
                         'unidade_medida' => $item->unidade_medida,
                         'grupo_produto' => $item->grupo_produto,
@@ -924,7 +924,7 @@ class RelatoriosController extends Controller
 
             // Query base com eager loading para evitar N+1
             $query = \App\Models\Estoque::with([
-                'produto:id,nome,codigo_simpras,codigo_barras,grupo_produto_id,unidade_medida_id',
+                'produto:id,nome,codigo_simpas,codigo_barras,grupo_produto_id,unidade_medida_id',
                 'produto.grupoProduto:id,nome,tipo',
                 'produto.unidadeMedida:id,nome',
                 'setor:id,polo_id,nome,tipo',

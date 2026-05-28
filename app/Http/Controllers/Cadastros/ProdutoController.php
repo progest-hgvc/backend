@@ -107,7 +107,7 @@ class ProdutoController
 
             $query->select(
                 'produtos.id', 'produtos.nome', 'produtos.marca',
-                'produtos.codigo_simpras', 'produtos.codigo_barras',
+                'produtos.codigo_simpas', 'produtos.codigo_barras',
                 'produtos.grupo_produto_id', 'produtos.unidade_medida_id', 'produtos.status'
             );
 
@@ -168,7 +168,7 @@ class ProdutoController
             $produto = new Produto();
             $produto->nome = trim($data['nome']);
             $produto->marca = !empty($data['marca']) ? trim($data['marca']) : null;
-            $produto->codigo_simpras = !empty($data['codigo_simpras']) ? trim($data['codigo_simpras']) : null;
+            $produto->codigo_simpas = !empty($data['codigo_simpas']) ? trim($data['codigo_simpas']) : null;
             $produto->codigo_barras = !empty($data['codigo_barras']) ? trim($data['codigo_barras']) : null;
             $produto->grupo_produto_id = $data['grupo_produto_id'];
             $produto->unidade_medida_id = $data['unidade_medida_id'];
@@ -197,7 +197,7 @@ class ProdutoController
 
             $produto->nome = trim($data['nome']);
             $produto->marca = !empty($data['marca']) ? trim($data['marca']) : null;
-            $produto->codigo_simpras = !empty($data['codigo_simpras']) ? trim($data['codigo_simpras']) : null;
+            $produto->codigo_simpas = !empty($data['codigo_simpas']) ? trim($data['codigo_simpas']) : null;
             $produto->codigo_barras = !empty($data['codigo_barras']) ? trim($data['codigo_barras']) : null;
             $produto->grupo_produto_id = $data['grupo_produto_id'];
             $produto->unidade_medida_id = $data['unidade_medida_id'];
@@ -308,7 +308,7 @@ class ProdutoController
                     $query->where('tipo', $tipo);
                 })
                 ->where('status', 'A')
-                ->select('id', 'nome', 'marca', 'codigo_simpras', 'grupo_produto_id', 'unidade_medida_id')
+                ->select('id', 'nome', 'marca', 'codigo_simpas', 'grupo_produto_id', 'unidade_medida_id')
                 ->orderBy('nome')
                 ->get();
 

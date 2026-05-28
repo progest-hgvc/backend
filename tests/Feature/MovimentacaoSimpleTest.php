@@ -57,7 +57,7 @@ class MovimentacaoSimpleTest extends TestCase
 
         $produto = Produto::create([
             'nome' => 'DIPIRONA',
-            'codigo_simpras' => '001',
+            'codigo_simpas' => '001',
             'codigo_barras' => '123',
             'grupo_produto_id' => $grupo->id,
             'unidade_medida_id' => $unidadeMedida->id,

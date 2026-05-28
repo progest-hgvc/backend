@@ -38,7 +38,7 @@ class EstoqueController extends Controller
             // Buscar estoque do setor com informações do produto
             $estoque = Estoque::with([
                 'produto' => function ($query) {
-                    $query->select('id', 'nome', 'marca', 'codigo_simpras', 'codigo_barras', 'grupo_produto_id', 'unidade_medida_id', 'status');
+                    $query->select('id', 'nome', 'marca', 'codigo_simpas', 'codigo_barras', 'grupo_produto_id', 'unidade_medida_id', 'status');
                 },
                 'produto.grupoProduto' => function ($query) {
                     $query->select('id', 'nome', 'tipo', 'status');
@@ -62,7 +62,7 @@ class EstoqueController extends Controller
                             'nome' => $item->produto->nome,
                             'nome_completo' => $item->produto->nome_completo,
                             'marca' => $item->produto->marca,
-                            'codigo_simpras' => $item->produto->codigo_simpras,
+                            'codigo_simpas' => $item->produto->codigo_simpas,
                             'codigo_barras' => $item->produto->codigo_barras,
                             'status' => $item->produto->status,
                             'grupo_produto' => [

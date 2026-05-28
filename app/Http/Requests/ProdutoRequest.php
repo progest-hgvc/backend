@@ -31,12 +31,12 @@ class ProdutoRequest extends BaseFormRequest
                 })->ignore($id),
             ],
             'produto.marca' => 'nullable|string|max:191',
-            'produto.codigo_simpras' => [
+            'produto.codigo_simpas' => [
                 'nullable',
                 'string',
                 'max:20',
                 'regex:/^[A-Za-z0-9\-\.]+$/',
-                'unique:produtos,codigo_simpras,' . $id,
+                'unique:produtos,codigo_simpas,' . $id,
             ],
             'produto.codigo_barras' => [
                 'nullable',
@@ -63,9 +63,9 @@ class ProdutoRequest extends BaseFormRequest
             'produto.nome.max' => 'O nome não pode ter mais de 191 caracteres.',
             'produto.marca.max' => 'A marca não pode ter mais de 191 caracteres.',
 
-            'produto.codigo_simpras.unique' => 'Este código SIMPRAS já está cadastrado.',
-            'produto.codigo_simpras.max' => 'O código SIMPRAS deve ter no máximo 20 caracteres.',
-            'produto.codigo_simpras.regex' => 'O código SIMPRAS deve conter apenas letras, números, hífens e pontos.',
+            'produto.codigo_simpas.unique' => 'Este código SIMPAS já está cadastrado.',
+            'produto.codigo_simpas.max' => 'O código SIMPAS deve ter no máximo 20 caracteres.',
+            'produto.codigo_simpas.regex' => 'O código SIMPAS deve conter apenas letras, números, hífens e pontos.',
             'produto.codigo_barras.unique' => 'Este código de barras já está cadastrado.',
             'produto.codigo_barras.max' => 'O código de barras deve ter no máximo 13 dígitos.',
             'produto.codigo_barras.regex' => 'O código de barras deve conter apenas números.',
@@ -80,7 +80,7 @@ class ProdutoRequest extends BaseFormRequest
         return [
             'produto.nome' => 'Nome do Produto',
             'produto.marca' => 'Marca',
-            'produto.codigo_simpras' => 'Código SIMPRAS',
+            'produto.codigo_simpas' => 'Código SIMPAS',
             'produto.codigo_barras' => 'Código de Barras',
             'produto.grupo_produto_id' => 'Grupo',
             'produto.unidade_medida_id' => 'Unidade de Medida',
