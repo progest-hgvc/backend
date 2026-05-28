@@ -43,6 +43,21 @@ class UsuarioSetorController extends Controller
                 return response()->json(['status' => false, 'message' => 'Este usuário já está vinculado a este setor.'], 422);
             }
 
+            // Regra de Negócio: CAF (Setor raiz sem distribuidor) não pode ter 'solicitante'
+            // Regra de Negócio: Setor sem estoque não pode ter 'almoxarife'
+            $setorObj = DB::table('setores')->where('id', $setorId)->first();
+            if ($setorObj) {
+                // Se não tem ninguém como fornecedor dele, ele é a raiz (CAF)
+                $hasDistribuidor = DB::table('setor_distribuidor')->where('setor_solicitante_id', $setorId)->exists();
+                if (!$hasDistribuidor && $perfil === 'solicitante') {
+                    return response()->json(['status' => false, 'message' => 'Operação negada: Uma CAF (setor centralizador) não pode ter usuários com perfil de solicitante.'], 422);
+                }
+
+                if (!$setorObj->estoque && $perfil === 'almoxarife') {
+                    return response()->json(['status' => false, 'message' => 'Operação negada: Um setor sem estoque próprio não pode ter usuários almoxarifes.'], 422);
+                }
+            }
+
             $id = DB::table('usuario_setor')->insertGetId([
                 'usuario_id' => $usuarioId,
                 'setor_id'   => $setorId,
@@ -84,6 +99,20 @@ class UsuarioSetorController extends Controller
             $registro = DB::table('usuario_setor')->where('usuario_id', $usuarioId)->where('setor_id', $setorId)->first();
             if (!$registro) {
                 return response()->json(['status' => false, 'message' => 'Vínculo não encontrado.'], 404);
+            }
+
+            // Regra de Negócio: CAF (Setor raiz sem distribuidor) não pode ter 'solicitante'
+            // Regra de Negócio: Setor sem estoque não pode ter 'almoxarife'
+            $setorObj = DB::table('setores')->where('id', $setorId)->first();
+            if ($setorObj) {
+                $hasDistribuidor = DB::table('setor_distribuidor')->where('setor_solicitante_id', $setorId)->exists();
+                if (!$hasDistribuidor && $perfil === 'solicitante') {
+                    return response()->json(['status' => false, 'message' => 'Operação negada: Uma CAF (setor centralizador) não pode ter usuários com perfil de solicitante.'], 422);
+                }
+
+                if (!$setorObj->estoque && $perfil === 'almoxarife') {
+                    return response()->json(['status' => false, 'message' => 'Operação negada: Um setor sem estoque próprio não pode ter usuários almoxarifes.'], 422);
+                }
             }
 
             DB::table('usuario_setor')->where('id', $registro->id)->update(['perfil' => $perfil, 'updated_at' => now()]);

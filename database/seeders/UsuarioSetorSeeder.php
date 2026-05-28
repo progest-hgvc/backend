@@ -35,8 +35,8 @@ class UsuarioSetorSeeder extends Seeder
             return;
         }
 
-        // Buscar todos os setores cadastrados
-        $setores = DB::table('setores')->pluck('id');
+        // Buscar todos os setores cadastrados (agora pegamos o objeto inteiro para validar o nome)
+        $setores = DB::table('setores')->get();
 
         if ($setores->isEmpty()) {
             $this->command->error('Nenhum setor encontrado. Execute SetoresSeeder primeiro.');
@@ -51,11 +51,22 @@ class UsuarioSetorSeeder extends Seeder
         ];
 
         foreach ($vinculos as $vinculo) {
-            foreach ($setores as $setorId) {
+            foreach ($setores as $setor) {
+                // Regra 1: CAF (Setor raiz sem distribuidor) não pode ter 'solicitante'
+                $hasDistribuidor = DB::table('setor_distribuidor')->where('setor_solicitante_id', $setor->id)->exists();
+                if (!$hasDistribuidor && $vinculo['perfil'] === 'solicitante') {
+                    continue; // Pula vinculação
+                }
+
+                // Regra 2: Setores sem estoque não podem ter 'almoxarife'
+                if (!$setor->estoque && $vinculo['perfil'] === 'almoxarife') {
+                    continue; // Pula vinculação
+                }
+
                 DB::table('usuario_setor')->updateOrInsert(
                     [
                         'usuario_id' => $vinculo['usuario_id'],
-                        'setor_id'   => $setorId,
+                        'setor_id'   => $setor->id,
                     ],
                     [
                         'perfil'     => $vinculo['perfil'],
