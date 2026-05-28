@@ -17,7 +17,7 @@ class CreateProdutosTable extends Migration
             $table->id();
             $table->string('nome');
             $table->string('marca')->nullable();
-            $table->string('codigo_simpras')->nullable();
+            $table->string('codigo_simpas')->nullable();
             $table->string('codigo_barras')->nullable();
             $table->foreignId('grupo_produto_id')->constrained('grupo_produto')->onDelete('restrict');
             $table->foreignId('unidade_medida_id')->constrained('unidade_medida')->onDelete('restrict');

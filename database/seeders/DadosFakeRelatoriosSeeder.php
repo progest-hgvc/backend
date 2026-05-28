@@ -285,7 +285,7 @@ class DadosFakeRelatoriosSeeder extends Seeder
             $this->produtos[] = Produto::firstOrCreate(
                 ['nome' => $nome],
                 [
-                    'codigo_simpras' => 'MED-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT),
+                    'codigo_simpas' => 'MED-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT),
                     'grupo_produto_id' => $grupo->id,
                     'unidade_medida_id' => $unidade->id,
                     'status' => 'A',
@@ -300,7 +300,7 @@ class DadosFakeRelatoriosSeeder extends Seeder
             $this->produtos[] = Produto::firstOrCreate(
                 ['nome' => $nome],
                 [
-                    'codigo_simpras' => 'MAT-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT),
+                    'codigo_simpas' => 'MAT-' . str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT),
                     'grupo_produto_id' => $grupo->id,
                     'unidade_medida_id' => $unidade->id,
                     'status' => 'A',

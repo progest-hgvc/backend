@@ -78,7 +78,7 @@ class ProdutosSeeder extends Seeder
                     ],
                     [
                         'marca' => $dadosProduto['marca'] ?? null,
-                        'codigo_simpras' => $dadosProduto['codigo_simpras'] ?? null,
+                        'codigo_simpas' => $dadosProduto['codigo_simpas'] ?? null,
                         'codigo_barras' => $dadosProduto['codigo_barras'] ?? null,
                         'unidade_medida_id' => $unidade->id,
                         'status' => 'A',

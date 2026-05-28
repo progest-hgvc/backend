@@ -17,7 +17,7 @@ class ProdutosImport implements ToCollection
 
             Produto::create([
                 'nome' => $row[1], // coluna nome
-                'codigo_simpras' => $row[0], // coluna código
+                'codigo_simpas' => $row[0], // coluna código
                 'grupo_produto_id' => 1, // ajustar depois
                 'unidade_medida_id' => 1, // ajustar depois
                 'status' => 'A',
